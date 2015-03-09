@@ -2,7 +2,7 @@
 # License: BSD (3-clause)
 
 import sys
-# import mkl
+import mkl
 import os
 import os.path as op
 import mne
@@ -20,7 +20,7 @@ debug = False
 
 if len(sys.argv) > 1:
     subjects = [sys.argv[1]]
-    # mkl.set_num_threads(1)
+    mkl.set_num_threads(1)
 
 for subject in subjects:
     this_path = op.join(data_path, 'MEG', subject)

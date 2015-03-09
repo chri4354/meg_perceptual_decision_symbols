@@ -5,9 +5,7 @@ import os.path as op
 
 from mne.io.pick import pick_types as picks_by_type
 from mne.io import Raw
-
-from meeg_preprocessing import compute_icagit fil
-
+from meeg_preprocessing import compute_ica
 from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
 from config import (

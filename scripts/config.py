@@ -38,7 +38,6 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc', 
       'subject17_az']
 
-# subjects = ['subject05_cl']
 exclude_subjects = []  # XXX add subject names here if you wan't to exclude
 
 runs = list(range(1, 10, 1))  # 10 runs per subject

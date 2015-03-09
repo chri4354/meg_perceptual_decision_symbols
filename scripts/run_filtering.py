@@ -8,6 +8,7 @@ import os.path as op
 import mne
 from config import(
     data_path,
+    subjects,
     runs,
     raw_fname_tmp,
     raw_fname_filt_tmp,

@@ -3,7 +3,7 @@
 
 import os.path as op
 
-from mne.io.pick import pick_types as picks_by_type
+from mne.io.pick import _picks_by_type as picks_by_type
 from mne.io import Raw
 from meeg_preprocessing import compute_ica
 from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
@@ -36,9 +36,9 @@ for subject in subjects:  # XXX if needed compute run-wise
             continue
         raw.append(Raw(fname, preload=True))
 
-    set_eog_ecg_channels(raw)  # XXX check
+    set_eog_ecg_channels(raw, eog_ch='EOG061', ecg_ch='ECG063')  # XXX check
 
-    for ch_type, picks in picks_by_type(raw.info, meg_combined=True):
+    for ch_type, picks in picks_by_type(raw.info):  # XXX remove arg 'meg_combined=True'
         ica, _ = compute_ica(
             raw, picks=picks, subject=subject, n_components=n_components,
             n_max_ecg=n_max_ecg, n_max_eog=n_max_eog, reject=ica_reject,

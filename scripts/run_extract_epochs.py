@@ -13,6 +13,8 @@ from mne.viz import plot_drop_log
 
 from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
+from ambiguity.conditions import events_select_condition
+
 from config import (
     data_path,
     subjects,
@@ -20,14 +22,8 @@ from config import (
     results_dir,
     raw_fname_filt_tmp,
     events_fname_filt_tmp,
-    event_id,
     ch_types_used,
-    epochs_params,  # XXX list of dict
-    epochs_tmin,
-    epochs_tmax,
-    epochs_reject,
-    epochs_baseline,
-    epochs_decim,
+    epochs_params,
     use_ica
 )
 
@@ -71,13 +67,14 @@ for subject in subjects:
         events = mne.read_events(
             op.join(this_path, events_fname_filt_tmp.format(run)))
 
-        # epochs = mne.Epochs(  # XXX deal with response VS stim locking
-        #     raw=raw, events=events, event_id=event_id, tmin=epochs_tmin,
-        #     picks=picks, tmax=epochs_tmax, baseline=epochs_baseline,
-        #     reject=epochs_reject, decim=epochs_decim, preload=True)
+        events_stim = events_select_condition(triggers, 'stim')
+        events_resp = events_select_condition(triggers, 'motor')
+
         for ep, epochs_list in zip(epochs_params,
-                                   [epochs_list_stim, epochs_list_resp]):
-            epochs = mne.Epochs(raw=raw, **ep)
+                                   [epochs_list_stim, epochs_list_resp],
+                                   [events_stim, events_resp]):
+            epochs = mne.Epochs(raw=raw, picks=picks, preload=True, **ep)
+
             if use_ica is True:
                 for ica in icas:
                     ica.apply(epochs)

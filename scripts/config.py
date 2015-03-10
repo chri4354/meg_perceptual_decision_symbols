@@ -64,8 +64,6 @@ morph_mat_fname_tmp = '{}-morph_mat.mat'
 ch_types_used = ['meg']
 
 # ICA ##########################################################################
-
-# XXX check EOG channels, definitions might differ for subjects
 use_ica = True
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
@@ -73,19 +71,22 @@ n_components = 'rank'
 n_max_ecg = 4
 n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
-ica_decim = 15  # XXX adjust depdning on data
+ica_decim = 15  # XXX adjust depending on data
 
 # REPORT
 open_browser = False
 
 # EPOCHS #######################################################################
-
-# XXX write function to select epochs
+# Generic epochs parameters for stimulus-lock and response-lock conditions
 event_id = None  # use all for master epochs
-epochs_tmin, epochs_tmax = -0.2, 0.8
 epochs_reject = dict(grad=4000e-13, mag=4e-12, eog=180e-6)
-epochs_baseline = None
 epochs_decim = 3
+# Specific epochs parameters for stimulus-lock and response-lock conditions
+epochs_stim = dict(event_id=event_id, tmin=-0.2, tmax=0.8, baseline=None,
+                   reject=epochs_reject, decim=epochs_decim)
+epochs_resp = dict(event_id=event_id, tmin=-0.8, tmax=0.2, baseline=None,
+                   reject=epochs_reject, decim=epochs_decim)
+epochs_params = [epochs_stim, epochs_resp]
 
 # COV ##########################################################################
 cov_method = ['shrunk', 'empirical']

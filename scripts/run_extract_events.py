@@ -45,7 +45,7 @@ for subject in subjects:
 
         # XXX  do your events processing and preparation here
         triggers = events[:,2]
-        selection = events_select_condition(triggers, 'stim')
+        selection = events_select_condition(triggers, 'all')
         events = events[selection]
 
         mne.write_events(

@@ -46,14 +46,16 @@ def events_select_condition(triggers, condition):
     selection : np.array (dims = [m, 1])
         The selected triggers.
     """
-    if condition == 'stim':
+    if condition == 'all':
+        selection = np.where(triggers > 0)
+    elif condition == 'stim':
         selection = np.where((triggers > 0 ) & (triggers < 32))
     elif condition == 'stim_left':
         pass
     elif condition == 'stim_right':
         pass
     elif condition == 'motor':
-        pass
+        selection = np.where(triggers > 32)
     elif condition == 'motor_left':
         pass
     elif condition == 'motor_right':

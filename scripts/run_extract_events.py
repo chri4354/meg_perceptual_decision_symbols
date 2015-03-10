@@ -30,30 +30,34 @@ if len(sys.argv) > 1:
     mkl.set_num_threads(1)  # XXX handle MKL
 
 for subject in subjects:
-    this_path = op.join(data_path, 'MEG', subject)
-    # XXX handle event id
-    for run in runs:
-        fname = op.join(this_path, raw_fname_filt_tmp.format(run))
-        if not op.isfile(fname):
-            logger.info('Could not find %s. Skipping' % fname)
-            continue
-        raw = mne.io.Raw(fname)
+    try:
+        this_path = op.join(data_path, 'MEG', subject)
+        # XXX handle event id
+        for run in runs:
+            fname = op.join(this_path, raw_fname_filt_tmp.format(run))
+            if not op.isfile(fname):
+                logger.info('Could not find %s. Skipping' % fname)
+                continue
+            raw = mne.io.Raw(fname)
 
-        events = mne.find_events(
-            raw, stim_channel='STI101', consecutive='increasing',
-            min_duration=0.003, verbose=True)
+            events = mne.find_events(
+                raw, stim_channel='STI101', consecutive='increasing',
+                min_duration=0.003, verbose=True)
 
-        # XXX  do your events processing and preparation here
-        triggers = events[:,2]
-        selection = events_select_condition(triggers, 'all')
-        events = events[selection]
+            # XXX  do your events processing and preparation here
+            triggers = events[:,2]
+            selection = events_select_condition(triggers, 'all')
+            events = events[selection]
 
-        mne.write_events(
-            op.join(this_path, events_fname_filt_tmp.format(run)), events)
+            mne.write_events(
+                op.join(this_path, events_fname_filt_tmp.format(run)), events)
 
-        fig = mne.viz.plot_events(
-            events, raw.info['sfreq'], raw.first_samp, show=False,
-            event_id=event_id)
-        report.add_figs_to_section(fig, 'events run %i' % run, subject)
+            fig = mne.viz.plot_events(
+                events, raw.info['sfreq'], raw.first_samp, show=False,
+                event_id=event_id)
+            report.add_figs_to_section(fig, 'events run %i' % run, subject)
+    except (RuntimeError, TypeError, NameError):
+        # XXX add to log
+        print "Problem EVENTS with subject " + subject
 
 report.save(open_browser=open_browser)

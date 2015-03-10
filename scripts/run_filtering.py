@@ -24,15 +24,19 @@ if len(sys.argv) > 1:
     mkl.set_num_threads(1)
 
 for subject in subjects:
-    this_path = op.join(data_path, 'MEG', subject)
-    os.chdir(this_path)
-    for run in runs:
-        raw_in = raw_fname_tmp.format(run)
-        raw_out = raw_fname_filt_tmp.format(run)
-        if op.exists(op.join(this_path, raw_out)) and debug:
-            continue
-        else:
-            print op.join(this_path, raw_in)
-        raw = mne.io.Raw(raw_in, preload=True)
-        raw.filter(highpass, lowpass, filter_length=filtersize)
-        raw.save(raw_out, overwrite=True)
+    try:
+        this_path = op.join(data_path, 'MEG', subject)
+        os.chdir(this_path)
+        for run in runs:
+            raw_in = raw_fname_tmp.format(run)
+            raw_out = raw_fname_filt_tmp.format(run)
+            if op.exists(op.join(this_path, raw_out)) and debug:
+                continue
+            else:
+                print op.join(this_path, raw_in)
+            raw = mne.io.Raw(raw_in, preload=True)
+            raw.filter(highpass, lowpass, filter_length=filtersize)
+            raw.save(raw_out, overwrite=True)
+    except (RuntimeError, TypeError, NameError):
+        # XXX add to log
+        print "Problem FILTER with subject " + subject

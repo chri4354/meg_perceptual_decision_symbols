@@ -21,6 +21,8 @@ from config import (
     runs,
     results_dir,
     raw_fname_filt_tmp,
+    eog_ch,
+    ecg_ch,
     events_fname_filt_tmp,
     ch_types_used,
     epochs_params,
@@ -54,7 +56,7 @@ for subject in subjects:
             continue
 
         raw = Raw(fname)
-        set_eog_ecg_channels(raw)
+        set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
         if 'eeg' in ch_types_used and len(raw.info['bads']) > 0:
             raw.interpolate_bad_channels()
 
@@ -67,13 +69,15 @@ for subject in subjects:
         events = mne.read_events(
             op.join(this_path, events_fname_filt_tmp.format(run)))
 
-        events_stim = events_select_condition(triggers, 'stim')
-        events_resp = events_select_condition(triggers, 'motor')
+        triggers = events[:,2]
+        events_stim = events[events_select_condition(triggers, 'stim')]
+        events_resp = events[events_select_condition(triggers, 'motor')]
 
-        for ep, epochs_list in zip(epochs_params,
+        for ep, epochs_list, events in zip(epochs_params,
                                    [epochs_list_stim, epochs_list_resp],
                                    [events_stim, events_resp]):
-            epochs = mne.Epochs(raw=raw, picks=picks, preload=True, **ep)
+            epochs = mne.Epochs(raw=raw, picks=picks, preload=True,
+                                events=events, **ep)
 
             if use_ica is True:
                 for ica in icas:

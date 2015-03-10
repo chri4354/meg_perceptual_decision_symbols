@@ -42,7 +42,7 @@ for subject in subjects:  # XXX if needed compute run-wise
 
     set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
 
-    for ch_type, picks in picks_by_type(raw.info):  # XXX remove arg 'meg_combined=True'
+    for ch_type, picks in picks_by_type(raw.info, meg_combined=True):
         ica, _ = compute_ica(
             raw, picks=picks, subject=subject, n_components=n_components,
             n_max_ecg=n_max_ecg, n_max_eog=n_max_eog, reject=ica_reject,

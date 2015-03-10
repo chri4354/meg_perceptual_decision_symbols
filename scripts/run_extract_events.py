@@ -15,7 +15,7 @@ from config import (
     data_path,
     subjects,
     runs,
-    events_id,
+    event_id,
     results_dir,
     events_fname_filt_tmp,
     raw_fname_filt_tmp,
@@ -53,7 +53,7 @@ for subject in subjects:
 
         fig = mne.viz.plot_events(
             events, raw.info['sfreq'], raw.first_samp, show=False,
-            event_id=events_id)
+            event_id=event_id)
         report.add_figs_to_section(fig, 'events run %i' % run, subject)
 
 report.save(open_browser=open_browser)

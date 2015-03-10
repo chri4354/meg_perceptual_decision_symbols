@@ -81,7 +81,7 @@ open_browser = False
 # EPOCHS #######################################################################
 
 # XXX write function to select epochs
-events_id = None  # use all for master epochs
+event_id = None  # use all for master epochs
 epochs_tmin, epochs_tmax = -0.2, 0.8
 epochs_reject = dict(grad=4000e-13, mag=4e-12, eog=180e-6)
 epochs_baseline = None

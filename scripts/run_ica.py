@@ -15,6 +15,8 @@ from config import (
     runs,
     results_dir,
     raw_fname_filt_tmp,
+    eog_ch,
+    ecg_ch,
     n_components,
     n_max_ecg,
     n_max_eog,
@@ -38,7 +40,7 @@ for subject in subjects:  # XXX if needed compute run-wise
         raw.append(Raw(fname, preload=True))
 
 
-    set_eog_ecg_channels(raw, eog_ch='EOG061', ecg_ch='ECG063')  # XXX check
+    set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
 
     for ch_type, picks in picks_by_type(raw.info):  # XXX remove arg 'meg_combined=True'
         ica, _ = compute_ica(

@@ -33,9 +33,9 @@ if not op.exists(results_dir):
 
 # SUBJECTS #####################################################################
 subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
-      'subject05_cl', 'subject06_ha', 'subject07_sb', 'subject08_pj', 
-      'subject09_kr', 'subject10_cs', 'subject11_aj', 'subject12_ea', 
-      'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc', 
+      'subject05_cl', 'subject06_ha', 'subject07_sb', 'subject08_pj',
+      'subject09_kr', 'subject10_cs', 'subject11_aj', 'subject12_ea',
+      'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
 exclude_subjects = []  # XXX add subject names here if you wan't to exclude
@@ -66,6 +66,8 @@ ch_types_used = ['meg']
 
 # XXX check EOG channels, definitions might differ for subjects
 use_ica = True
+eog_ch = ['EOG061', 'EOG062']
+ecg_ch = 'ECG063'
 n_components = 'rank'
 n_max_ecg = 4
 n_max_eog = 2

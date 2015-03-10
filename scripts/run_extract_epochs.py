@@ -56,35 +56,57 @@ for subject in subjects:
             continue
 
         raw = Raw(fname)
+
+        # Set ECG EOG channels XXX again?
         set_eog_ecg_channels(raw, eog_ch=eog_ch, ecg_ch=ecg_ch)
+
+        # Interpolate bad channels
         if 'eeg' in ch_types_used and len(raw.info['bads']) > 0:
             raw.interpolate_bad_channels()
 
+        # Select MEG channels
         picks = np.concatenate(
             [p for k, p in picks_by_type(raw.info, meg_combined=True)
              if k in ch_types_used])
         picks = np.concatenate(
             [picks, mne.pick_types(raw.info, meg=False, eeg=False, eog=True)])
 
+        # Get events identified in run_extract_events
         events = mne.read_events(
             op.join(this_path, events_fname_filt_tmp.format(run)))
 
-        triggers = events[:,2]
-        events_stim = events[events_select_condition(triggers, 'stim')]
-        events_resp = events[events_select_condition(triggers, 'motor')]
+        # Epoch data for each epoch type
+        for ep, epochs_list in zip(epochs_params,
+                                   [epochs_list_stim, epochs_list_resp]):
+            # Select events
+            events_sel = events[events_select_condition(events[:,2],
+                                                        ep['events']),:]
 
-        for ep, epochs_list, events in zip(epochs_params,
-                                   [epochs_list_stim, epochs_list_resp],
-                                   [events_stim, events_resp]):
+            # Only keep parameters applicable to mne.Epochs()
+            ep_epochs = {key:v for key, v in ep.items() if key in ['event_id',
+                                                               'tmin', 'tmax',
+                                                               'baseline',
+                                                               'reject',
+                                                               'decim']}
+            # Epoch raw data
             epochs = mne.Epochs(raw=raw, picks=picks, preload=True,
-                                events=events, **ep)
+                                events=events_sel, **ep_epochs)
 
+            # Redefine t0 if necessary
+            if 'time_shift' in ep.keys():
+                epochs.times += ep['time_shift']
+                epochs.tmin += ep['time_shift']
+                epochs.tmax += ep['time_shift']
+
+            # ICA correction
             if use_ica is True:
                 for ica in icas:
                     ica.apply(epochs)
 
+            # Append runs
             epochs_list.append(epochs)
 
+    # Save and report
     for name, epochs_list in zip(['stim', 'resp'],
                                  [epochs_list_stim, epochs_list_resp]):
         epochs = mne.epochs.concatenate_epochs(epochs_list)

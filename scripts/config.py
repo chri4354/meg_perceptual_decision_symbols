@@ -78,14 +78,15 @@ open_browser = False
 
 # EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock conditions
-event_id = None  # use all for master epochs
-epochs_reject = dict(grad=4000e-13, mag=4e-12, eog=180e-6)
-epochs_decim = 3
+cfg = dict(event_id=None,
+           reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5),
+           decim = 3)
+
 # Specific epochs parameters for stimulus-lock and response-lock conditions
-epochs_stim = dict(event_id=event_id, tmin=-0.2, tmax=0.8, baseline=None,
-                   reject=epochs_reject, decim=epochs_decim)
-epochs_resp = dict(event_id=event_id, tmin=-0.8, tmax=0.2, baseline=None,
-                   reject=epochs_reject, decim=epochs_decim)
+epochs_stim = dict(events='stim', tmin=-0.5, tmax=1.8, baseline=None,
+                   time_shift=-0.410, **cfg)
+epochs_resp = dict(events='motor', tmin=-1.8, tmax=0.5, baseline=None,
+                   **cfg)
 epochs_params = [epochs_stim, epochs_resp]
 
 # COV ##########################################################################

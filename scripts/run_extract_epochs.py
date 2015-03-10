@@ -11,7 +11,7 @@ from mne.io.pick import _picks_by_type as picks_by_type
 from mne.preprocessing import read_ica
 from mne.viz import plot_drop_log
 
-from minmax.utils import setup_provenance, set_eog_ecg_channels
+from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
 from config import (
     data_path,

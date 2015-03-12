@@ -9,7 +9,7 @@ import mne
 
 from meeg_preprocessing.utils import setup_provenance
 
-from ambiguity.conditions import events_select_condition
+from ambiguity.conditions import events_select_condition, extract_events
 
 from config import (
     data_path,
@@ -27,37 +27,34 @@ report, run_id, results_dir, logger = setup_provenance(
 
 if len(sys.argv) > 1:
     subjects = [sys.argv[1]]
-    mkl.set_num_threads(1)  # XXX handle MKL
+    mkl.set_num_threads(1)
 
 for subject in subjects:
-    try:
-        this_path = op.join(data_path, 'MEG', subject)
-        # XXX handle event id
-        for run in runs:
-            fname = op.join(this_path, raw_fname_filt_tmp.format(run))
-            if not op.isfile(fname):
-                logger.info('Could not find %s. Skipping' % fname)
-                continue
-            raw = mne.io.Raw(fname)
+    this_path = op.join(data_path, 'MEG', subject)
+    # XXX handle event id
+    for run in runs:
+        fname = op.join(this_path, raw_fname_filt_tmp.format(run))
+        if not op.isfile(fname):
+            logger.info('Could not find %s. Skipping' % fname)
+            continue
+        raw = mne.io.Raw(fname)
 
-            events = mne.find_events(
-                raw, stim_channel='STI101', consecutive='increasing',
-                min_duration=0.003, verbose=True)
+        # issue with MNE due to slow triggering (more than 1 sample to go to value)
+        #events = mne.find_events(
+        #    raw, stim_channel='STI101', consecutive='increasing',
+        #    min_duration=0.000, verbose=True)
+        #print(sum(events[:,2]<63))
 
-            # XXX  do your events processing and preparation here
-            triggers = events[:,2]
-            selection = events_select_condition(triggers, 'all')
-            events = events[selection]
+        events = extract_events(fname, min_duration=0.003)
 
-            mne.write_events(
-                op.join(this_path, events_fname_filt_tmp.format(run)), events)
+        selection = events_select_condition(events[:,2], 'stim_motor')
+        events = events[selection]
 
-            fig = mne.viz.plot_events(
-                events, raw.info['sfreq'], raw.first_samp, show=False,
-                event_id=event_id)
-            report.add_figs_to_section(fig, 'events run %i' % run, subject)
-    except (RuntimeError, TypeError, NameError):
-        # XXX add to log
-        print "Problem EVENTS with subject " + subject
+        mne.write_events(
+            op.join(this_path, events_fname_filt_tmp.format(run)), events)
 
+        fig = mne.viz.plot_events(
+            events, raw.info['sfreq'], raw.first_samp, show=False,
+            event_id=event_id)
+        report.add_figs_to_section(fig, 'events run %i' % run, subject)
 report.save(open_browser=open_browser)

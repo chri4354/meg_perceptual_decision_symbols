@@ -6,6 +6,8 @@ base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data', 'ambiguity')
 
+pass_errors = False
+
 """ Data path notes
 
 link your data against data_path
@@ -38,10 +40,11 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
+subjects = ['subject05_cl']
+
 exclude_subjects = []  # XXX add subject names here if you wan't to exclude
 
-runs = list(range(1, 10, 1))  # 10 runs per subject
-
+runs = list(range(1, 11, 1))  # 10 runs per subject
 
 # FILRERING ####################################################################
 lowpass = 40
@@ -55,7 +58,7 @@ raw_fname_tmp = 'run_{:02d}_sss.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (
     highpass, lowpass)
 events_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss-eve.fif' % (
-    highpass, lowpass)
+    highpass, lowpass) # XXX any reason why -eve. but _raw?
 forward_fname_tmp = '{}-meg-oct-6-fwd.fif'
 morph_mat_fname_tmp = '{}-morph_mat.mat'
 

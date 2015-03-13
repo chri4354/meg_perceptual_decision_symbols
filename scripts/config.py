@@ -33,6 +33,10 @@ results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
     os.mkdir(results_dir)
 
+
+# REPORT
+open_browser = False
+
 # SUBJECTS #####################################################################
 subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject05_cl', 'subject06_ha', 'subject07_sb', 'subject08_pj',
@@ -49,7 +53,7 @@ runs = list(range(1, 11, 1))  # 10 runs per subject
 # FILRERING ####################################################################
 lowpass = 40
 highpass = 1
-filtersize = 16384
+filtersize = 16384  # XXX check with denis
 decim = 1
 
 # FILENAMES ####################################################################
@@ -75,20 +79,17 @@ n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
 ica_decim = 15  # XXX adjust depending on data
 
-# REPORT
-open_browser = False
-
 # EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock conditions
 event_id = None
 cfg = dict(event_id=event_id,
            reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5),
-           decim = 3)
+           decim = 4)
 
 # Specific epochs parameters for stimulus-lock and response-lock conditions
-epochs_stim = dict(events='stim', tmin=-0.5, tmax=1.8, baseline=None,
+epochs_stim = dict(events='stim', tmin=-0.090, tmax=1.290, baseline=None,
                    time_shift=-0.410, **cfg)
-epochs_resp = dict(events='motor', tmin=-1.8, tmax=0.5, baseline=None,
+epochs_resp = dict(events='motor', tmin=-1.500, tmax=0.200, baseline=None,
                    **cfg)
 epochs_params = [epochs_stim, epochs_resp]
 

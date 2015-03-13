@@ -39,20 +39,18 @@ for subject in subjects:
             continue
         raw = mne.io.Raw(fname)
 
-        # issue with MNE due to slow triggering (more than 1 sample to go to value)
-        #events = mne.find_events(
-        #    raw, stim_channel='STI101', consecutive='increasing',
-        #    min_duration=0.000, verbose=True)
-        #print(sum(events[:,2]<63))
-
         events = extract_events(fname, min_duration=0.003)
 
         selection = events_select_condition(events[:,2], 'stim_motor')
         events = events[selection]
 
+        print('%s events run %i : %i' %  subject, run, len(events))
+
+        # Save
         mne.write_events(
             op.join(this_path, events_fname_filt_tmp.format(run)), events)
 
+        # Plot
         fig = mne.viz.plot_events(
             events, raw.info['sfreq'], raw.first_samp, show=False,
             event_id=event_id)

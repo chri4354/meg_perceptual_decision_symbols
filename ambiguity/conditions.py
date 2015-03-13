@@ -2,6 +2,7 @@
 import mne
 import numpy as np
 import warnings
+from toolbox.jr_toolbox import struct
 
 def epochs_select_condition(epochs, condition):
     """Function to handle events and event ids
@@ -52,18 +53,40 @@ def events_select_condition(trigger, condition):
     if condition == 'stim_motor':
         selection = np.where(trigger > 0)[0]
     elif condition == 'stim':
-        selection = np.where((trigger > 0 ) & (trigger < 128))[0]
-    elif condition == 'stim_left':
-        pass
-    elif condition == 'stim_right':
-        pass
+        selection = np.where((trigger > 0 ) & (trigger < 64))[0]
     elif condition == 'motor':
         selection = np.where(trigger > 63)[0]
-    elif condition == 'motor_left':
-        pass
-    elif condition == 'motor_right':
-        pass
     return selection
+
+def get_events_stim(bhv_fname):
+    """"Get events from matlab file"""
+
+    trials = sio.loadmat(bhv_fname, squeeze_me=True,
+                         struct_as_record=True)["trials"]
+
+    # Redefine key to be more explicit
+    keys = [('side', 'stim_side', int),
+            ('amb', 'stim_contrast', float),
+            ('amb_word', 'stim_letter', float),
+            ('respond', 'bhv', bool),
+            ('key', 'bhv_side', int),
+            ('correct', 'bhv_correct', float),
+            ('RT_MEG', 'bhv_RT', float),
+            ('choice', 'bhv_category', int),
+            ('choice_bar', 'bhv_contrast', float)]
+
+    # Create indexable dictionary
+    events = list()
+    for ii, trial in enumerate(trials):
+        event = dict()
+        for key in keys:
+            event[key[1]] = trial[key[0]]
+        event['trigger_value'] = int(trial['ttl']['value'])
+        event['trial_number'] = ii
+        events.append(event)
+
+    events_struct = struct(events)
+    return events_struct
 
 
 def extract_events(fname, min_duration=0.003):
@@ -120,13 +143,15 @@ def extract_events(fname, min_duration=0.003):
 
     # Combine S and M events
     events_S = [sample_S, np.zeros(len(sample_S)), trigger_S]
-    print('n_stim=')
-    print(len(sample_S))
     events_M = [sample_M, np.zeros(len(sample_M)), trigger_M]
     events = np.hstack((events_S, events_M)).transpose()
 
     # Sort events by sample
     events = events[np.argsort(events[:, 0]), :]
+
+    # Add starting sample
+    events[:,0] += raw.first_samp
+
     return events
 
 def _combine_events(data, min_sample):

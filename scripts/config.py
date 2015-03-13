@@ -35,7 +35,7 @@ if not op.exists(results_dir):
 
 
 # REPORT
-open_browser = False
+open_browser = True
 
 # SUBJECTS #####################################################################
 subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
@@ -44,15 +44,15 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
-subjects = ['subject05_cl']
+# subjects = ['subject05_cl']
 
 exclude_subjects = []  # XXX add subject names here if you wan't to exclude
 
 runs = list(range(1, 11, 1))  # 10 runs per subject
 
 # FILRERING ####################################################################
-lowpass = 40
-highpass = 1
+lowpass = 30
+highpass = 0.75
 filtersize = 16384  # XXX check with denis
 decim = 1
 
@@ -84,13 +84,13 @@ ica_decim = 15  # XXX adjust depending on data
 event_id = None
 cfg = dict(event_id=event_id,
            reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5),
-           decim = 4)
+           decim = 16)
 
 # Specific epochs parameters for stimulus-lock and response-lock conditions
-epochs_stim = dict(events='stim', tmin=-0.090, tmax=1.290, baseline=None,
-                   time_shift=-0.410, **cfg)
-epochs_resp = dict(events='motor', tmin=-1.500, tmax=0.200, baseline=None,
-                   **cfg)
+epochs_stim = dict(name='stim_lock', events='stim', tmin=0.310, tmax=1.210,
+                   baseline=None, time_shift=-0.410, **cfg)
+epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500, tmax=0.200,
+                   baseline=None, **cfg)
 epochs_params = [epochs_stim, epochs_resp]
 
 # COV ##########################################################################
@@ -111,8 +111,19 @@ lambda2 = 1.0 / snr ** 2
 apply_inverse_params = {'method': "dSPM", 'pick_ori': None, 'pick_normal': None}
 
 # MAIN #########################################################################
+passive = dict(cond='active', values=[2])
+contrasts = (
+            dict(include=dict(cond='stim_side', values=[1, 2]),
+                 exclude=[passive]),
+            dict(include=dict(cond='stim_category', values=[1, 8]),
+                exclude=[passive]),
+            dict(include=dict(cond='motor_side', values=[1, 2]),
+                 exclude=[passive]),
+            dict(include=dict(cond='motor_category', values=[1, 2]),
+                 exclude=[passive])
+            )
 
-# XXX parameters for your main analysis
+
 
 # STATS ########################################################################
 

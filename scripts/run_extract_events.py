@@ -44,7 +44,7 @@ for subject in subjects:
         selection = events_select_condition(events[:,2], 'stim_motor')
         events = events[selection]
 
-        print('%s events run %i : %i' %  subject, run, len(events))
+        print('%s events run %i : %i' % (subject, run, len(events)))
 
         # Save
         mne.write_events(

@@ -42,8 +42,7 @@ if len(sys.argv) > 1:
 
 for subject in subjects:
     this_path = op.join(data_path, 'MEG', subject)
-    epochs_list_stim = list()
-    epochs_list_resp = list()
+    all_epochs = [[]] * len(epochs_params)
 
     icas = list()
     if use_ica is True:
@@ -78,8 +77,7 @@ for subject in subjects:
             op.join(this_path, events_fname_filt_tmp.format(run)))
 
         # Epoch data for each epoch type
-        for ep, epochs_list in zip(epochs_params,
-                                   [epochs_list_stim, epochs_list_resp]):
+        for ep, epochs_list in zip(epochs_params, all_epochs):
             # Select events
             sel = events_select_condition(events[:,2], ep['events'])
             events_sel = events[sel,:]
@@ -109,10 +107,11 @@ for subject in subjects:
             epochs_list.append(epochs)
 
     # Save and report
-    for name, epochs_list in zip(['stim', 'motor'],
-                                 [epochs_list_stim, epochs_list_resp]):
+    for name, epochs_list in zip([ep['name'] for ep in epochs_params], all_epochs):
         # Concatenate runs
         epochs = mne.epochs.concatenate_epochs(epochs_list)
+        # Save
+        epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
 
         # Plot
         #-- % dropped
@@ -120,10 +119,9 @@ for subject in subjects:
             plot_drop_log(epochs.drop_log), 'total dropped {}'.format(
                 name), subject)
         #-- % trigger channel
-        trigger_ch = mne.pick_channels(epochs.ch_names, 'STI101')
-        epochs._data[:, trigger_ch,:] = np.log(epochs._data[:, trigger_ch,:]) + 1
-        fig = mne.viz.plot_image_epochs(epochs, trigger_ch,
-                                        scalings=dict(stim=132),
+        ch = mne.pick_channels(epochs.ch_names, 'STI101')
+        epochs._data[:, ch,:] = np.log(epochs._data[:, ch,:]) + 1
+        fig = mne.viz.plot_image_epochs(epochs, ch, scalings=dict(stim=132),
                                         units=dict(stim=''))
         report.add_figs_to_section(fig, 'STI101 %s' % name, subject)
 
@@ -137,7 +135,5 @@ for subject in subjects:
         fig = evoked.plot_topomap(times, ch_type='mag')
         report.add_figs_to_section(fig, 'Mean ERF %s: topo' % name, subject)
 
-        # Save
-        epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
 
 report.save(open_browser=open_browser)

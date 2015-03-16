@@ -130,18 +130,26 @@ def extract_events(fname, min_duration=0.003):
 
     # Load data
     raw = mne.io.Raw(fname, preload=True)
+
+    # Dissociate STI101 into distinct channels
+    raw.pick_channels(['STI101'])
+    n_bits = 16
+    raw._data = np.round(raw._data)
+    data = np.zeros((n_bits, raw.n_times))
+    for bit in range(0, n_bits)[::-1]:
+        data[bit, :] = (raw._data >= 2 ** bit).astype(float)
+        raw._data -= data[bit, :] * (2 ** bit)
+
     # Min duration in sample
     min_sample = min_duration * raw.info['sfreq']
 
-    # 1. Combine STI channels
-    S_ch = ['STI001', 'STI002', 'STI003', 'STI004', 'STI005', 'STI006']
-    M_ch = ['STI013', 'STI015']
-    raw.pick_channels(S_ch + M_ch)
-
     # Binarize trigger values from 5 mV to 0 and 1
-    raw._data = np.round(raw._data / 5)
-    cmb_S, sample_S = _combine_events(raw._data[0:len(S_ch)], min_sample)
-    cmb_M, sample_M = _combine_events(raw._data[len(S_ch):], min_sample)
+    S_ch = range(0, 11)
+    M_ch = range(11, n_bits)
+    cmb_M, sample_M = _combine_events(data[len(S_ch):,:], min_sample)
+    # Only consider stim triggers after first button response (to avoid trigger
+    # test trhat shouldn't have been recorded)
+    cmb_S, sample_S = _combine_events(data[0:len(S_ch),:], min_sample, sample_M[0])
 
     # Correct order of magnitude of M response to avoid S/M conflict
     cmb_M *= (2 ** len(S_ch))
@@ -173,7 +181,7 @@ def extract_events(fname, min_duration=0.003):
 
     return events
 
-def _combine_events(data, min_sample):  # GENERIC TRIGGER FUNCTION
+def _combine_events(data, min_sample, first_sample=0):
     """ Function to combine multiple trigger channel in a single binary code """
     n_chan, n_sample = data.shape
     cmb = np.zeros([n_chan, n_sample])
@@ -181,8 +189,9 @@ def _combine_events(data, min_sample):  # GENERIC TRIGGER FUNCTION
         cmb[bit, :] = 2 ** bit * data[bit, :]
     cmb = np.sum(cmb, axis=0)
 
-    # Find trigger onsets and offset
+    # Find trigger onsets and offsets
     diff = cmb[1:] - cmb[0:-1]
+    diff[:first_sample] = 0  # don't consider triggers before this
     onset = np.where(diff > 0)[0] + 1
     offset = np.where(diff < 0)[0]
 

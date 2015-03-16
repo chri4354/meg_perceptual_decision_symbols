@@ -30,21 +30,22 @@ def events_select_condition(trigger, condition):
 
 def get_events_stim(bhv_fname):
     """"Get events from matlab file"""
+    import pandas as pd
 
     trials = sio.loadmat(bhv_fname, squeeze_me=True,
                          struct_as_record=True)["trials"]
 
     # Redefine key to be more explicit
-    keys = [('side', 'stim_side', int),
+    keys = [('type', 'stim_active', int),
+            ('side', 'stim_side', int),
             ('amb', 'stim_contrast', float),
             ('amb_word', 'stim_category', float),
-            ('respond', 'bhv', bool),
-            ('key', 'bhv_side', int),
-            ('correct', 'bhv_correct', float),
-            ('RT_MEG', 'bhv_RT', float),
-            ('choice', 'bhv_category', int),
-            ('choice_bar', 'bhv_contrast', float),
-            ('type', 'stim_active', int)]
+            ('respond', 'motor', bool),
+            ('key', 'motor_side', int),
+            ('correct', 'motor_correct', float),
+            ('RT_MEG', 'motor_RT', float),
+            ('choice', 'motor_category', int),
+            ('choice_bar', 'motor_contrast', float)]
 
     # Create indexable dictionary
     events = list()
@@ -56,8 +57,8 @@ def get_events_stim(bhv_fname):
         event['trial_number'] = ii
         events.append(event)
 
-    events_struct = struct(events)
-    return events
+    events_df = pd.DataFrame(events)
+    return events_df
 
 
 def extract_events(fname, min_duration=0.003):
@@ -157,30 +158,3 @@ def _combine_events(data, min_sample):  # GENERIC TRIGGER FUNCTION
     sample = onset[duration > min_sample].tolist()
 
     return cmb, sample
-
-# def select_trials(events, list_dicts):  # GENERIC TRIAL FUNCTION
-#     """Function that find trials indices from (set of) condition(s)
-#
-#     Parameters
-#     ----------
-#     events : struct
-#         list of array contructed with class jr_toolbox.struct
-#     lists_dicts : dict | list
-#         dict, or list of dicts each with keys 'cond' and 'value'
-#
-#     Returns
-#     -------
-#     trials : list
-#         indices of selected trials"""
-#     trials = list()
-#     # Default: list of dictionary/ies
-#     if type(list_dicts) == dict:
-#         includes = [includes]
-#     for d in list_dicts:
-#         # Default: multiple values in list
-#         if type(d['value']) != list:
-#             d['value'] = [d['value']]
-#         # Get trials with identified value
-#         for value in d['value']:
-#             trials.append(np.where(events.get(d['cond'])==value)[0]
-#     return trials

@@ -44,7 +44,7 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
-# subjects = ['subject05_cl']
+subjects = ['subject05_cl']
 
 exclude_subjects = []  # XXX add subject names here if you wan't to exclude
 
@@ -111,7 +111,7 @@ lambda2 = 1.0 / snr ** 2
 apply_inverse_params = {'method': "dSPM", 'pick_ori': None, 'pick_normal': None}
 
 # MAIN #########################################################################
-passive = dict(cond='active', values=[2])
+passive = dict(cond='stim_active', values=[2])
 contrasts = (
             dict(include=dict(cond='stim_side', values=[1, 2]),
                  exclude=[passive]),

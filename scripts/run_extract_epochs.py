@@ -42,7 +42,7 @@ if len(sys.argv) > 1:
 
 for subject in subjects:
     this_path = op.join(data_path, 'MEG', subject)
-    all_epochs = [[]] * len(epochs_params)
+    all_epochs = [list(), list()] # XXX should be generic to take len(epochs_params)
 
     icas = list()
     if use_ica is True:

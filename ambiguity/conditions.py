@@ -28,8 +28,21 @@ def events_select_condition(trigger, condition):
         selection = np.where((trigger > 64) & (trigger != 128))[0]
     return selection
 
-def get_events_stim(bhv_fname, ep_name='both'):
-    """"Get events from matlab file"""
+def get_events(bhv_fname, ep_name='both'):
+    """"Get events from matlab file
+
+    Parameters
+    ----------
+    bhv_fname : str
+        mat file path with behavioral results
+    ep_name : str (default: 'both')
+        string indicating if output corresponds to 'stim' events, 'motor' events
+        or 'both'
+
+    Returns
+    -------
+    events_df : pd.DataFrame
+    """
     import pandas as pd
 
     trials = sio.loadmat(bhv_fname, squeeze_me=True,
@@ -62,19 +75,19 @@ def get_events_stim(bhv_fname, ep_name='both'):
         # NB: There seems to be an error in the matlab postproc code regarding
         # trials.amb_word. We thus need to redefine the conditions properly.
         if trial['target_code'] in [1, 2]: # [['540', 'SHO'], ['560', 'SEO']]
-            events['stim_category'] = trial['amb'] / 8
+            event['stim_category'] = (trial['amb'] - 1.0) / 7.0
         elif trial['target_code'] in [3, 5]: # [[540, 590],  [560, 580]]
-            events['stim_category'] = 0.0
+            event['stim_category'] = 0.0
         elif trial['target_code'] in [4, 6]: # [[SHO, SAO],  [SEO, SCO]]
-            events['stim_category'] = 1.0
+            event['stim_category'] = 1.0
         else:
             raise('problem target_code!')
 
         # ---- stimulus contrast
         if trial['target_code'] in [1, 3, 4, 5]:
-            events['stim_contrast'] = events['stim_category']
-        elif: trial['target_code'] in [2, 6]:
-            events['stim_contrast'] = 1 - events['stim_category']
+            event['stim_contrast'] = event['stim_category']
+        elif trial['target_code'] in [2, 6]:
+            event['stim_contrast'] = 1.0 - event['stim_category']
         else:
             raise('problem target_code!')
 
@@ -82,12 +95,15 @@ def get_events_stim(bhv_fname, ep_name='both'):
         if (ep_name == 'stim_lock' or ep_name == 'both'):
             event['event_type'] = 'stim'
             events.append(event)
-        # Concatenate motor event if expect one
+
+        # Add motor event subject responded so as to get a single events
+        # structure for both stim and resp lock
         if (ep_name == 'motor_lock' or ep_name == 'both'):
             if event['motor']:
-                eventm = event
-                eventm['event_type'] = 'motor'
-                events.append(eventm)
+                event['event_type'] = 'motor'
+                events.append(event)
+
+    # store and panda DataFrame for easier manipulation
     events_df = pd.DataFrame(events)
     return events_df
 

@@ -116,7 +116,7 @@ missed = dict(cond='motor', values=[0])
 contrasts = (
             dict(include=dict(cond='stim_side', values=[1, 2]),
                  exclude=[passive]),
-            dict(include=dict(cond='stim_category', values=[1, 8]),
+            dict(include=dict(cond='stim_category', values=[0.0, 1.0]),
                 exclude=[passive]),
             dict(include=dict(cond='motor_side', values=[1, 2]),
                  exclude=[passive, missed]),

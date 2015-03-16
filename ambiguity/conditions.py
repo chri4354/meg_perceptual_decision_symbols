@@ -28,7 +28,7 @@ def events_select_condition(trigger, condition):
         selection = np.where((trigger > 64) & (trigger != 128))[0]
     return selection
 
-def get_events_stim(bhv_fname, name='both'):
+def get_events_stim(bhv_fname, ep_name='both'):
     """"Get events from matlab file"""
     import pandas as pd
 
@@ -38,29 +38,52 @@ def get_events_stim(bhv_fname, name='both'):
     # Redefine key to be more explicit
     keys = [('type', 'stim_active', int),
             ('side', 'stim_side', int),
-            ('amb', 'stim_contrast', float),
+            ('amb', 'stim_category', float),
             ('amb_word', 'stim_category', float),
-            ('respond', 'motor', bool),
             ('key', 'motor_side', int),
             ('correct', 'motor_correct', float),
             ('RT_MEG', 'motor_RT', float),
             ('choice', 'motor_category', int),
-            ('choice_bar', 'motor_contrast', float)]
+            ('choice_bar', 'motor_contrast', float)] # XXX still need to formally check choice and choice_bar
 
     # Create indexable dictionary
     events = list()
     for ii, trial in enumerate(trials):
         event = dict()
+        # add already present fields
         for key in keys:
             event[key[1]] = trial[key[0]]
+
+        # Add manual fields
         event['trigger_value'] = int(trial['ttl']['value'])
         event['trial_number'] = ii
+
+        # ---- stimulus categorical ambiguity
+        # NB: There seems to be an error in the matlab postproc code regarding
+        # trials.amb_word. We thus need to redefine the conditions properly.
+        if trial['target_code'] in [1, 2]: # [['540', 'SHO'], ['560', 'SEO']]
+            events['stim_category'] = trial['amb'] / 8
+        elif trial['target_code'] in [3, 5]: # [[540, 590],  [560, 580]]
+            events['stim_category'] = 0.0
+        elif trial['target_code'] in [4, 6]: # [[SHO, SAO],  [SEO, SCO]]
+            events['stim_category'] = 1.0
+        else:
+            raise('problem target_code!')
+
+        # ---- stimulus contrast
+        if trial['target_code'] in [1, 3, 4, 5]:
+            events['stim_contrast'] = events['stim_category']
+        elif: trial['target_code'] in [2, 6]:
+            events['stim_contrast'] = 1 - events['stim_category']
+        else:
+            raise('problem target_code!')
+
         # Concatenate stim event
-        if (name == 'stim_lock' or name == 'both'):
+        if (ep_name == 'stim_lock' or ep_name == 'both'):
             event['event_type'] = 'stim'
             events.append(event)
         # Concatenate motor event if expect one
-        if (name == 'motor_lock' or name == 'both'):
+        if (ep_name == 'motor_lock' or ep_name == 'both'):
             if event['motor']:
                 eventm = event
                 eventm['event_type'] = 'motor'

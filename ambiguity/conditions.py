@@ -23,12 +23,12 @@ def events_select_condition(trigger, condition):
     if condition == 'stim_motor':
         selection = np.where(trigger > 0)[0]
     elif condition == 'stim':
-        selection = np.where((trigger > 0 ) & (trigger < 64))[0]
-    elif condition == 'motor':
-        selection = np.where(trigger > 63)[0]
+        selection = np.where((trigger > 0) & (trigger < 64))[0]
+    elif condition == 'motor':  # remove response not linked to stim
+        selection = np.where((trigger > 64) & (trigger != 128))[0]
     return selection
 
-def get_events_stim(bhv_fname):
+def get_events_stim(bhv_fname, name='both'):
     """"Get events from matlab file"""
     import pandas as pd
 
@@ -55,8 +55,16 @@ def get_events_stim(bhv_fname):
             event[key[1]] = trial[key[0]]
         event['trigger_value'] = int(trial['ttl']['value'])
         event['trial_number'] = ii
-        events.append(event)
-
+        # Concatenate stim event
+        if (name == 'stim_lock' or name == 'both'):
+            event['event_type'] = 'stim'
+            events.append(event)
+        # Concatenate motor event if expect one
+        if (name == 'motor_lock' or name == 'both'):
+            if event['motor']:
+                eventm = event
+                eventm['event_type'] = 'motor'
+                events.append(eventm)
     events_df = pd.DataFrame(events)
     return events_df
 

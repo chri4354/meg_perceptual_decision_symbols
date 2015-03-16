@@ -112,15 +112,16 @@ apply_inverse_params = {'method': "dSPM", 'pick_ori': None, 'pick_normal': None}
 
 # MAIN #########################################################################
 passive = dict(cond='stim_active', values=[2])
+missed = dict(cond='motor', values=[0])
 contrasts = (
             dict(include=dict(cond='stim_side', values=[1, 2]),
                  exclude=[passive]),
             dict(include=dict(cond='stim_category', values=[1, 8]),
                 exclude=[passive]),
             dict(include=dict(cond='motor_side', values=[1, 2]),
-                 exclude=[passive]),
-            dict(include=dict(cond='motor_category', values=[1, 2]),
-                 exclude=[passive])
+                 exclude=[passive, missed]),
+            dict(include=dict(cond='motor_category', values=[0, 1]),
+                 exclude=[passive, missed])
             )
 
 

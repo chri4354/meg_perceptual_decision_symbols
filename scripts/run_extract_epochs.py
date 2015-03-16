@@ -111,7 +111,7 @@ for subject in subjects:
         # Concatenate runs
         epochs = mne.epochs.concatenate_epochs(epochs_list)
         # Save
-        epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
+        epochs.save(op.join(this_path, '{}_{}-epo.fif'.format(name, subject)))
 
         # Plot
         #-- % dropped

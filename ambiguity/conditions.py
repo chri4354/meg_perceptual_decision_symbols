@@ -70,6 +70,7 @@ def get_events(bhv_fname, ep_name='both'):
         # Add manual fields
         event['trigger_value'] = int(trial['ttl']['value'])
         event['trial_number'] = ii
+        event['motor'] = trial['key'] in [1, 2]
 
         # ---- stimulus categorical ambiguity
         # NB: There seems to be an error in the matlab postproc code regarding
@@ -196,9 +197,9 @@ def _combine_events(data, min_sample, first_sample=0):
     offset = np.where(diff < 0)[0]
 
     # minimum changing time
-    onset_t = np.where((onset[1:] - onset[:-1]) > min_sample)[0]
+    onset_t = np.where((onset[1:] - onset[:-1]) >= min_sample)[0]
     onset = onset[np.append(onset_t, len(onset_t))]
-    offset_t = np.where((offset[1:] - offset[:-1]) > min_sample)[0] + 1
+    offset_t = np.where((offset[1:] - offset[:-1]) >= min_sample)[0] + 1
     offset = offset[np.append(0, offset_t)]
 
     # Correct inequality of triggers' onsets and offsets

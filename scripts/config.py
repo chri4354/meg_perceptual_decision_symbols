@@ -44,7 +44,10 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
-exclude_subjects = []
+# subjects = ['subject05_cl']
+
+exclude_subjects = ['subject06_ha', 'subject10_cs'] # XXX problem trigger, need manual check!
+subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 11, 1))  # 10 runs per subject
 

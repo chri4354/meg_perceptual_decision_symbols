@@ -18,7 +18,7 @@ from config import (
     event_id,
     results_dir,
     events_fname_filt_tmp,
-    first_events_from,
+    events_params,
     raw_fname_filt_tmp,
     open_browser
 )
@@ -40,12 +40,13 @@ for subject in subjects:
         raw = mne.io.Raw(fname)
 
         # Deal with unwanted initial triggers
-        if subject in first_events_from.keys():
-            start = first_events_from[subject][r]
+        if subject in events_params.keys():
+            # r - 1 because run starts at 1 not 0
+            events_param = events_params[subject][r - 1]
         else:
-            start = 0
+            events_param = dict()
 
-        events = extract_events(fname, min_duration=0.003, start=start)
+        events = extract_events(fname, min_duration=0.003, **events_param)
 
         selection = events_select_condition(events[:,2], 'stim_motor')
         events = events[selection]

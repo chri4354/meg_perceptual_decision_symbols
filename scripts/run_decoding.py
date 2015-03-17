@@ -6,6 +6,7 @@ from mne.io.pick import _picks_by_type as picks_by_type
 from mne.preprocessing import read_ica
 from mne.viz import plot_drop_log
 from mne.decoding import GeneralizationAcrossTime
+from toolbox.jr_toolbox import my_resample, my_decim
 
 import pickle
 
@@ -21,6 +22,7 @@ from scripts.config import (
     epochs_params,
     open_browser,
     contrasts,
+    decoding_preproc
 )
 
 
@@ -38,7 +40,7 @@ for subject in subjects:
 
     # Apply contrast on each type of epoch
     all_epochs = [[]] * len(epochs_params)
-    for epoch_params in epochs_params:
+    for epoch_params, preproc in zip(epochs_params, decoding_preproc):
         ep_name = epoch_params['name']
 
         # Get events specific to epoch definition (stim or motor lock)
@@ -48,9 +50,14 @@ for subject in subjects:
                             '{}-{}-epo.fif'.format(ep_name, subject))
         epochs = mne.read_epochs(epo_fname)
 
-        # Decim epochs for speed issues
-        # epochs.resample(125, n_jobs=-1)  # XXX check with denis
-        # epochs.crop(0., .500)
+        # preprocess data for memory issue
+        if 'resample' in preproc.keys():
+            epochs = my_resample(epochs, preproc['resample'])
+        if 'decim' in preproc.keys():
+            epochs = my_decim(epochs, preproc['decim'])
+        if 'crop' in preproc.keys():
+            epochs.crop(preproc['crop']['tmin'],
+                        preproc['crop']['tmax'])
 
         # Apply each contrast
         for contrast in contrasts:

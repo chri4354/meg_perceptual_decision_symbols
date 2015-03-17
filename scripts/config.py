@@ -44,13 +44,17 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
-exclude_subjects = ['subject06_ha', 'subject10_cs', 'subject16_mc', 'subject17_az'] # XXX problem trigger, need manual check! last subject has nothing?
+exclude_subjects = ['subject17_az']
+
 subjects = [s for s in subjects if s not in exclude_subjects]
 
-subjects = exclude_subjects
+runs = list(range(1, 11, 1))  # 10 runs per subject, starting from 1
 
-runs = list(range(1, 11, 1))  # 10 runs per subject
+# subjects = ['subject04_jm', 'subject05_cl', 'subject07_sb']
 
+# XXX PROBLEM SUBJECT17_AZ FIF FILE FOR RUN 2
+# XXX PROBLEM ICA SUBJECT 4
+# XXX CHECK NUMBER OF TRIALS SUBJECT 4
 # FILRERING ####################################################################
 lowpass = 30
 highpass = 0.75
@@ -71,7 +75,7 @@ morph_mat_fname_tmp = '{}-morph_mat.mat'
 ch_types_used = ['meg']
 
 # ICA ##########################################################################
-use_ica = True
+use_ica = False
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'
@@ -81,22 +85,28 @@ ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
 ica_decim = 15  # XXX adjust depending on data
 
 # EVENTS #######################################################################
-first_events_from = dict(subject06_ha=[0, 0, 0, 0, 0, 0, 0, 0, 0, 140000])
+# d = lambda n: [dict()] * n  # create a list of n dictionaries
+events_params = dict(subject06_ha=[dict()] * 9 + [dict(first_sample=140000)])
 
 # EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock conditions
 event_id = None
 cfg = dict(event_id=event_id,
            reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5),
-           decim = 16)
+           decim=4)
 
 # Specific epochs parameters for stimulus-lock and response-lock conditions
-epochs_stim = dict(name='stim_lock', events='stim', tmin=0.310, tmax=1.210,
+epochs_stim = dict(name='stim_lock', events='stim', tmin=0.110, tmax=1.110,
                    baseline=None, time_shift=-0.410, **cfg)
 epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500, tmax=0.200,
                    baseline=None, **cfg)
 epochs_params = [epochs_stim, epochs_resp]
 
+# Deal with individual issues
+issues_stim = dict()
+issues_motor = dict(subject05_cl=[1480])
+
+epochs_issues = [issues_stim, issues_motor]
 # COV ##########################################################################
 cov_method = ['shrunk', 'empirical']
 
@@ -121,12 +131,17 @@ contrasts = (
             dict(include=dict(cond='stim_side', values=[1, 2]),
                  exclude=[passive]),
             dict(include=dict(cond='stim_category', values=[0.0, 1.0]),
-                exclude=[passive]),
+                 exclude=[passive]),
             dict(include=dict(cond='motor_side', values=[1, 2]),
                  exclude=[passive, missed]),
             dict(include=dict(cond='motor_category', values=[0, 1]),
                  exclude=[passive, missed])
             )
+
+decoding_preproc_S = dict(decim=5, crop=dict(tmin=0., tmax=0.600))
+decoding_preproc_M = dict(decim=5, crop=dict(tmin=-0.500, tmax=0.100))
+decoding_preproc = [decoding_preproc_S, decoding_preproc_M]
+
 
 # STATS ########################################################################
 

@@ -3,7 +3,6 @@ import mne
 import numpy as np
 import warnings
 import scipy.io as sio
-from toolbox.jr_toolbox import struct
 
 def events_select_condition(trigger, condition):
     """Function to handle events and event ids
@@ -25,7 +24,8 @@ def events_select_condition(trigger, condition):
     elif condition == 'stim':
         selection = np.where((trigger > 0) & (trigger < 64))[0]
     elif condition == 'motor':  # remove response not linked to stim
-        selection = np.where((trigger > 64) & (trigger != 128))[0]
+        #selection = np.where((trigger > 64) & (trigger != 128))[0]
+        selection = np.where((trigger > 4096) & (trigger != 16384))[0]
     return selection
 
 def get_events(bhv_fname, ep_name='both'):
@@ -109,7 +109,8 @@ def get_events(bhv_fname, ep_name='both'):
     return events_df
 
 
-def extract_events(fname, min_duration=0.003, start=0):
+def extract_events(fname, min_duration=0.003, first_sample=0,
+                   offset_to_zero_M=True, offset_to_zero_S=False):
     """Function to 1) recompute STI101 from other channels
                    2) clean trigger channel
                    3) Add stimulus information to response channel
@@ -147,10 +148,16 @@ def extract_events(fname, min_duration=0.003, start=0):
     # Binarize trigger values to 0 and 1
     S_ch = range(0, 11)
     M_ch = range(11, n_bits)
-    cmb_M, sample_M = _combine_events(data[len(S_ch):,:], min_sample, start)
+    cmb_M, sample_M = _combine_events(data[len(S_ch):,:], min_sample,
+                                      first_sample=first_sample,
+                                      overlapping=False,
+                                      offset_to_zero=offset_to_zero_M)
     # Only consider stim triggers after first button response (to avoid trigger
     # test trhat shouldn't have been recorded)
-    cmb_S, sample_S = _combine_events(data[0:len(S_ch),:], min_sample, sample_M[0])
+    cmb_S, sample_S = _combine_events(data[0:len(S_ch),:], min_sample,
+                                      first_sample=sample_M[0],
+                                      overlapping=True,
+                                      offset_to_zero=offset_to_zero_S)
 
     # Correct order of magnitude of M response to avoid S/M conflict
     cmb_M *= (2 ** len(S_ch))
@@ -159,15 +166,20 @@ def extract_events(fname, min_duration=0.003, start=0):
     trigger_S, trigger_M = cmb_S[sample_S], cmb_M[sample_M]
 
     # Find first M response following trigger
-    max_delay = raw.info['sfreq'] * 3.000
-    sample_MS, trigger_MS = [], []
+    max_delay = raw.info['sfreq'] * 2.050
     for s, S in enumerate(sample_S):
         # Find first M response
         M = np.where(np.array(sample_M) > S)[0]
         # Check its link to S
-        if (any(M) and (sample_M[M[0]] - S) < max_delay):
-            # Associate S value to M to link the two
-            trigger_M[M[0]] += trigger_S[s]
+        if (any(M) and (sample_M[M[0]] - S) <= max_delay):
+            if trigger_S[s] <= 4.0:
+                # Associate S value to M to link the two
+                trigger_M[M[0]] += trigger_S[s]
+            else:
+                # Don't create trigger if stim is in passive condition
+                sample_M = sample_M[range(0,M[0]) + range(M[0]+1, len(sample_M))]
+
+    print([len(sample_S), len(sample_M)])
 
     # Combine S and M events
     events_S = [sample_S, np.zeros(len(sample_S)), trigger_S]
@@ -182,13 +194,18 @@ def extract_events(fname, min_duration=0.003, start=0):
 
     return events
 
-def _combine_events(data, min_sample, first_sample=0):
+def _combine_events(data, min_sample, first_sample=0, overlapping=True,
+                    offset_to_zero=True):
     """ Function to combine multiple trigger channel in a single binary code """
     n_chan, n_sample = data.shape
     cmb = np.zeros([n_chan, n_sample])
     for bit in range(0, n_chan):
         cmb[bit, :] = 2 ** bit * data[bit, :]
     cmb = np.sum(cmb, axis=0)
+
+    if not overlapping:
+        over_t = np.where(np.sum(data, axis=0) > 1.0)[0]
+        cmb[over_t] = 0.0
 
     # Find trigger onsets and offsets
     diff = cmb[1:] - cmb[0:-1]
@@ -202,9 +219,14 @@ def _combine_events(data, min_sample, first_sample=0):
     offset_t = np.where((offset[1:] - offset[:-1]) >= min_sample)[0] + 1
     offset = offset[np.append(0, offset_t)]
 
-    # Correct inequality of triggers' onsets and offsets
+    # first offsets should be after first onset
     if offset[0] < onset[0]:
         offset = offset[1:]
+    # offsets must go back to 0
+    if offset_to_zero:
+        offset = offset[np.where(cmb[offset+1] == 0.)[0]]
+    # XXX should do the same for onset?:
+    # onset = onset[np.where(cmb[onset-1] == 0.)[0]]
     if len(onset) > len(offset):
         #onset = onset[:-1]
         offset = np.hstack((offset, onset[-1] + min_sample))

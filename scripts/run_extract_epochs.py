@@ -41,6 +41,7 @@ if len(sys.argv) > 1:
     mkl.set_num_threads(1)
 
 for subject in subjects:
+    print(subject)
     this_path = op.join(data_path, 'MEG', subject)
     all_epochs = [list(), list()] # XXX should be generic to take len(epochs_params)
 
@@ -111,7 +112,7 @@ for subject in subjects:
         # Concatenate runs
         epochs = mne.epochs.concatenate_epochs(epochs_list)
         # Save
-        epochs.save(op.join(this_path, '{}_{}-epo.fif'.format(name, subject)))
+        epochs.save(op.join(this_path, '{}-{}-epo.fif'.format(name, subject)))
 
         # Plot
         #-- % dropped

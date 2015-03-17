@@ -49,8 +49,8 @@ for subject in subjects:
         for ch_type in ch_types_used:
             icas.append(read_ica(
                 op.join(this_path, '{}-ica.fif'.format(ch_type))))
-    for run in runs:
-        fname = op.join(this_path, raw_fname_filt_tmp.format(run))
+    for r in runs:
+        fname = op.join(this_path, raw_fname_filt_tmp.format(r))
         if not op.isfile(fname):
             logger.info('Could not find %s. Skipping' % fname)
             continue
@@ -74,7 +74,7 @@ for subject in subjects:
 
         # Get events identified in run_extract_events
         events = mne.read_events(
-            op.join(this_path, events_fname_filt_tmp.format(run)))
+            op.join(this_path, events_fname_filt_tmp.format(r)))
 
         # Epoch data for each epoch type
         for ep, epochs_list in zip(epochs_params, all_epochs):

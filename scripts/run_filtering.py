@@ -26,9 +26,9 @@ if len(sys.argv) > 1:
 for subject in subjects:
     this_path = op.join(data_path, 'MEG', subject)
     os.chdir(this_path)
-    for run in runs:
-        raw_in = raw_fname_tmp.format(run)
-        raw_out = raw_fname_filt_tmp.format(run)
+    for r in runs:
+        raw_in = raw_fname_tmp.format(r)
+        raw_out = raw_fname_filt_tmp.format(r)
         if op.exists(op.join(this_path, raw_out)) and debug:
             continue
         else:

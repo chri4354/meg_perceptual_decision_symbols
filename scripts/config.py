@@ -44,10 +44,10 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
       'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
       'subject17_az']
 
-# subjects = ['subject05_cl']
-
-exclude_subjects = ['subject06_ha', 'subject10_cs'] # XXX problem trigger, need manual check!
+exclude_subjects = ['subject06_ha', 'subject10_cs', 'subject16_mc', 'subject17_az'] # XXX problem trigger, need manual check! last subject has nothing?
 subjects = [s for s in subjects if s not in exclude_subjects]
+
+subjects = exclude_subjects
 
 runs = list(range(1, 11, 1))  # 10 runs per subject
 
@@ -79,6 +79,9 @@ n_max_ecg = 4
 n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
 ica_decim = 15  # XXX adjust depending on data
+
+# EVENTS #######################################################################
+first_events_from = dict(subject06_ha=[0, 0, 0, 0, 0, 0, 0, 0, 0, 140000])
 
 # EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock conditions

@@ -18,6 +18,7 @@ from config import (
     event_id,
     results_dir,
     events_fname_filt_tmp,
+    first_events_from,
     raw_fname_filt_tmp,
     open_browser
 )
@@ -31,28 +32,33 @@ if len(sys.argv) > 1:
 
 for subject in subjects:
     this_path = op.join(data_path, 'MEG', subject)
-    # XXX handle event id
-    for run in runs:
-        fname = op.join(this_path, raw_fname_filt_tmp.format(run))
+    for r in runs:
+        fname = op.join(this_path, raw_fname_filt_tmp.format(r))
         if not op.isfile(fname):
             logger.info('Could not find %s. Skipping' % fname)
             continue
         raw = mne.io.Raw(fname)
 
-        events = extract_events(fname, min_duration=0.003)
+        # Deal with unwanted initial triggers
+        if subject in first_events_from.keys():
+            start = first_events_from[subject][r]
+        else:
+            start = 0
+
+        events = extract_events(fname, min_duration=0.003, start=start)
 
         selection = events_select_condition(events[:,2], 'stim_motor')
         events = events[selection]
 
-        print('%s events run %i : %i' % (subject, run, len(events)))
+        print('%s events run %i : %i' % (subject, r, len(events)))
 
         # Save
         mne.write_events(
-            op.join(this_path, events_fname_filt_tmp.format(run)), events)
+            op.join(this_path, events_fname_filt_tmp.format(r)), events)
 
         # Plot
         fig = mne.viz.plot_events(
             events, raw.info['sfreq'], raw.first_samp, show=False,
             event_id=event_id)
-        report.add_figs_to_section(fig, 'events run %i' % run, subject)
+        report.add_figs_to_section(fig, 'events run %i' % r, subject)
 report.save(open_browser=open_browser)

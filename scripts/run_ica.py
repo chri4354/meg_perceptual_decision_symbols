@@ -32,8 +32,8 @@ for subject in subjects:  # XXX if needed compute run-wise
     this_path = op.join(data_path, 'MEG', subject)
     fname = op.join(this_path, raw_fname_filt_tmp.format(runs[0]))
     raw = Raw(fname, preload=True)
-    for run in runs[1:]:
-        fname = op.join(this_path, raw_fname_filt_tmp.format(run))
+    for r in runs[1:]:
+        fname = op.join(this_path, raw_fname_filt_tmp.format(r))
         if not op.isfile(fname):
             logger.info('Could not find %s. Skipping' % fname)
             continue

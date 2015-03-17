@@ -109,7 +109,7 @@ def get_events(bhv_fname, ep_name='both'):
     return events_df
 
 
-def extract_events(fname, min_duration=0.003):
+def extract_events(fname, min_duration=0.003, start=0):
     """Function to 1) recompute STI101 from other channels
                    2) clean trigger channel
                    3) Add stimulus information to response channel
@@ -144,10 +144,10 @@ def extract_events(fname, min_duration=0.003):
     # Min duration in sample
     min_sample = min_duration * raw.info['sfreq']
 
-    # Binarize trigger values from 5 mV to 0 and 1
+    # Binarize trigger values to 0 and 1
     S_ch = range(0, 11)
     M_ch = range(11, n_bits)
-    cmb_M, sample_M = _combine_events(data[len(S_ch):,:], min_sample)
+    cmb_M, sample_M = _combine_events(data[len(S_ch):,:], min_sample, start)
     # Only consider stim triggers after first button response (to avoid trigger
     # test trhat shouldn't have been recorded)
     cmb_S, sample_S = _combine_events(data[0:len(S_ch),:], min_sample, sample_M[0])

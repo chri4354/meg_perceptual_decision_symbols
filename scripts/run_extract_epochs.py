@@ -107,6 +107,8 @@ for subject in subjects:
             # Append runs
             epochs_list.append(epochs)
 
+            print(len(epochs))
+
     # Save and report
     for name, epochs_list in zip([ep['name'] for ep in epochs_params], all_epochs):
         # Concatenate runs

@@ -6,7 +6,7 @@ from mne.io.pick import _picks_by_type as picks_by_type
 from mne.preprocessing import read_ica
 from mne.viz import plot_drop_log
 from mne.decoding import GeneralizationAcrossTime
-from toolbox.jr_toolbox import my_resample, my_decim
+from toolbox.utils import resample_epochs, decim
 
 import pickle
 
@@ -52,9 +52,9 @@ for subject in subjects:
 
         # preprocess data for memory issue
         if 'resample' in preproc.keys():
-            epochs = my_resample(epochs, preproc['resample'])
+            epochs = resample_epochs(epochs, preproc['resample'])
         if 'decim' in preproc.keys():
-            epochs = my_decim(epochs, preproc['decim'])
+            epochs = decim(epochs, preproc['decim'])
         if 'crop' in preproc.keys():
             epochs.crop(preproc['crop']['tmin'],
                         preproc['crop']['tmax'])
@@ -98,12 +98,12 @@ for subject in subjects:
             gat.score(epochs[sel], y=y[sel])
 
             # Plot
-            fig = gat.plot_diagonal()
+            fig = gat.plot_diagonal(show=False)
             report.add_figs_to_section(fig, ('%s: %s (decoding)'
                                              % (ep_name, cond_name)),
                                        subject)
 
-            fig = gat.plot()
+            fig = gat.plot(show=False)
             report.add_figs_to_section(fig, ('%s: %s (GAT)'
                                              % (ep_name, cond_name)),
                                        subject)

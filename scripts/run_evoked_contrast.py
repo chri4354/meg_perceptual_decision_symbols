@@ -44,10 +44,6 @@ for subject in subjects:
                             '{}-{}-epo.fif'.format(ep_name, subject))
         epochs = mne.read_epochs(epo_fname)
 
-        # Decim epochs for speed issues
-        # epochs.resample(125, n_jobs=-1)  # XXX check with denis
-        # epochs.crop(0., .500)
-
         # Apply each contrast
         for contrast in contrasts:
             evokeds = list()

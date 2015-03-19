@@ -22,10 +22,10 @@ def events_select_condition(trigger, condition):
     if condition == 'stim_motor':
         selection = np.where(trigger > 0)[0]
     elif condition == 'stim':
-        selection = np.where((trigger > 0) & (trigger < 64))[0]
+        selection = np.where((trigger > 0) & (trigger < 4096))[0]
     elif condition == 'motor':  # remove response not linked to stim
         #selection = np.where((trigger > 64) & (trigger != 128))[0]
-        selection = np.where((trigger > 4096) & (trigger != 16384))[0]
+        selection = np.where(trigger >= 4096)[0]
     return selection
 
 def get_events(bhv_fname, ep_name='both'):
@@ -49,8 +49,7 @@ def get_events(bhv_fname, ep_name='both'):
                          struct_as_record=True)["trials"]
 
     # Redefine key to be more explicit
-    keys = [('type', 'stim_active', int),
-            ('side', 'stim_side', int),
+    keys = [('side', 'stim_side', int),
             ('amb', 'stim_category', float),
             ('amb_word', 'stim_category', float),
             ('key', 'motor_side', int),
@@ -68,9 +67,10 @@ def get_events(bhv_fname, ep_name='both'):
             event[key[1]] = trial[key[0]]
 
         # Add manual fields
+        event['stim_active'] = trial['type'] == 1
         event['trigger_value'] = int(trial['ttl']['value'])
+        event['motor_missed'] = not(event['motor_RT'] > 0.)
         event['trial_number'] = ii
-        event['motor'] = trial['key'] in [1, 2]
 
         # ---- stimulus categorical ambiguity
         # NB: There seems to be an error in the matlab postproc code regarding
@@ -100,9 +100,10 @@ def get_events(bhv_fname, ep_name='both'):
         # Add motor event subject responded so as to get a single events
         # structure for both stim and resp lock
         if (ep_name == 'motor_lock' or ep_name == 'both'):
-            if event['motor']:
-                event['event_type'] = 'motor'
-                events.append(event)
+            if event['stim_active']:
+                event_ = event.copy()
+                event_['event_type'] = 'motor'
+                events.append(event_)
 
     # store and panda DataFrame for easier manipulation
     events_df = pd.DataFrame(events)
@@ -148,36 +149,38 @@ def extract_events(fname, min_duration=0.003, first_sample=0,
     # Binarize trigger values to 0 and 1
     S_ch = range(0, 11)
     M_ch = range(11, n_bits)
-    cmb_M, sample_M = _combine_events(data[len(S_ch):,:], min_sample,
+    # Get all motor events, independently of task relevance
+    cmb_M_, sample_M_ = _combine_events(data[len(S_ch):,:], min_sample,
                                       first_sample=first_sample,
                                       overlapping=False,
                                       offset_to_zero=offset_to_zero_M)
     # Only consider stim triggers after first button response (to avoid trigger
     # test trhat shouldn't have been recorded)
     cmb_S, sample_S = _combine_events(data[0:len(S_ch),:], min_sample,
-                                      first_sample=sample_M[0],
+                                      first_sample=sample_M_[0],
                                       overlapping=True,
                                       offset_to_zero=offset_to_zero_S)
 
     # Correct order of magnitude of M response to avoid S/M conflict
-    cmb_M *= (2 ** len(S_ch))
+    cmb_M_ *= (2 ** len(S_ch))
 
     # Get trigger values for stim and unassociated motor
-    trigger_S, trigger_M = cmb_S[sample_S], cmb_M[sample_M]
+    trigger_S, trigger_M_ = cmb_S[sample_S], cmb_M_[sample_M_]
 
-    # Find first M response following trigger
-    max_delay = raw.info['sfreq'] * 2.050
+    # Select M responses relevant to task: first M response following trigger
+    #max_delay = raw.info['sfreq'] * (2.000 + .430)
+    sample_M, trigger_M = list(), list()
     for s, S in enumerate(sample_S):
         # Find first M response
-        M = np.where(np.array(sample_M) > S)[0]
+        M = np.where(np.array(sample_M_) > S)[0]
         # Check its link to S
-        if (any(M) and (sample_M[M[0]] - S) <= max_delay):
-            if trigger_S[s] <= 4.0:
+        # if (any(M) and (sample_M_[M[0]] - S) <= max_delay):
+        if any(M):
+            if trigger_S[s] <= 4.0: # Don't create trigger if stim is in passive condition
+                # Add motor response to motor
+                sample_M.append(sample_M_[M[0]])
                 # Associate S value to M to link the two
-                trigger_M[M[0]] += trigger_S[s]
-            else:
-                # Don't create trigger if stim is in passive condition
-                sample_M = sample_M[range(0,M[0]) + range(M[0]+1, len(sample_M))]
+                trigger_M.append(trigger_M_[M[0]] + trigger_S[s])
 
     print([len(sample_S), len(sample_M)])
 
@@ -186,7 +189,7 @@ def extract_events(fname, min_duration=0.003, first_sample=0,
     events_M = [sample_M, np.zeros(len(sample_M)), trigger_M]
     events = np.hstack((events_S, events_M)).transpose()
 
-    # Sort events by sample
+    # Sort events chronologically
     events = events[np.argsort(events[:, 0]), :]
 
     # Add starting sample

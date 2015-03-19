@@ -1,18 +1,15 @@
 import os
 import os.path as op
 
-# PATHS ########################################################################
+# PATHS ###############################################################
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data', 'ambiguity')
 
 pass_errors = False
 
-""" Data path notes
-
-link your data against data_path
-
-the directory structure should look like this
+""" Data paths:
+The directory structure should look like this
 
 # MEG directory containing MEG data for each subject
 ./data/ambiguity/MEG/subject1
@@ -25,108 +22,96 @@ the directory structure should look like this
 ./data/ambiguity/subjects/subjectN
 
 # other stuff
-./data/ambiguity/behavioral/
+./data/ambiguity/behavior/
 """
 
-results_dir = op.join(base_path, 'results')
-
-if not op.exists(results_dir):
-    os.mkdir(results_dir)
-
-
-# REPORT
+# REPORT ##############################################################
 open_browser = True
 
-# SUBJECTS #####################################################################
-subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
-      'subject05_cl', 'subject06_ha', 'subject07_sb', 'subject08_pj',
-      'subject09_kr', 'subject10_cs', 'subject11_aj', 'subject12_ea',
-      'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
-      'subject17_az']
+# SUBJECTS ############################################################
+subjects = ['subject01_ar', 'subject02_as', 'subject03_rm',
+            'subject04_jm', 'subject05_cl', 'subject06_ha',
+            'subject07_sb', 'subject08_pj', 'subject09_kr',
+            'subject10_cs', 'subject11_aj', 'subject12_ea',
+            'subject13_cg', 'subject14_ap', 'subject15_tb',
+            'subject16_mc', 'subject17_az']
 
-exclude_subjects = ['subject17_az']
+exclude_subjects = []
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 11, 1))  # 10 runs per subject, starting from 1
 
-# subjects = ['subject04_jm', 'subject05_cl', 'subject07_sb']
-
-# XXX PROBLEM SUBJECT17_AZ FIF FILE FOR RUN 2
-# XXX PROBLEM ICA SUBJECT 4
-# XXX CHECK NUMBER OF TRIALS SUBJECT 4
-# FILRERING ####################################################################
+# FILRERING ###########################################################
 lowpass = 30
 highpass = 0.75
-filtersize = 16384  # XXX check with denis
-decim = 1
+filtersize = 16384
 
-# FILENAMES ####################################################################
-# XXX update file name templates
+# FILENAMES ###########################################################
 raw_fname_tmp = 'run_{:02d}_sss.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (
     highpass, lowpass)
+# XXX any reason why -eve. but _raw?
 events_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss-eve.fif' % (
-    highpass, lowpass) # XXX any reason why -eve. but _raw?
+    highpass, lowpass)
 forward_fname_tmp = '{}-meg-oct-6-fwd.fif'
 morph_mat_fname_tmp = '{}-morph_mat.mat'
 
-# SELECTION ####################################################################
+results_dir = op.join(base_path, 'results')
+if not op.exists(results_dir):
+    os.mkdir(results_dir)
+
+# SELECTION ###########################################################
 ch_types_used = ['meg']
 
-# ICA ##########################################################################
-use_ica = False
+# ICA #################################################################
+use_ica = True
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'
 n_max_ecg = 4
 n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
-ica_decim = 15  # XXX adjust depending on data
+ica_decim = 50
 
-# EVENTS #######################################################################
-# d = lambda n: [dict()] * n  # create a list of n dictionaries
-events_params = dict(subject06_ha=[dict()] * 9 + [dict(first_sample=140000)])
+# EVENTS ##############################################################
+# Exceptional case: subject06 run 9 had a trigger test within the
+# recording, need to start collecting events after that/
+events_params = dict(subject06_ha=[dict()] * 9 +
+                                  [dict(first_sample=140000)])
 
-# EPOCHS #######################################################################
-# Generic epochs parameters for stimulus-lock and response-lock conditions
+# EPOCHS ##############################################################
+# Generic epochs parameters for stimulus-lock and response-lock
+# conditions
 event_id = None
-cfg = dict(event_id=event_id,
-           reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5),
-           decim=4)
+cfg = dict(event_id=event_id, decim=4)
+# reject=dict(grad=4000e-12, mag=4e-11, eog=180e-5)
 
-# Specific epochs parameters for stimulus-lock and response-lock conditions
-epochs_stim = dict(name='stim_lock', events='stim', tmin=0.110, tmax=1.110,
-                   baseline=None, time_shift=-0.410, **cfg)
-epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500, tmax=0.200,
-                   baseline=None, **cfg)
+# Specific epochs parameters for stim-lock and response-lock conditions
+epochs_stim = dict(name='stim_lock', events='stim', tmin=0.110,
+                   tmax=1.110, baseline=None, time_shift=-0.430, **cfg)
+epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500,
+                   tmax=0.200, baseline=None, **cfg)
 epochs_params = [epochs_stim, epochs_resp]
 
-# Deal with individual issues
-issues_stim = dict()
-issues_motor = dict(subject05_cl=[1480])
-
-epochs_issues = [issues_stim, issues_motor]
-# COV ##########################################################################
+# COV #################################################################
 cov_method = ['shrunk', 'empirical']
 
-# INVERSE ######################################################################
-
+# INVERSE #############################################################
 fsave_grade = 4
-
-fwd_fname_tmp = 'sub{:02d}-meg-oct-6-fwd.fif'  #
-
+fwd_fname_tmp = 'sub{:02d}-meg-oct-6-fwd.fif'
 make_inverse_params = {'loose': 0.2,
                        'depth': 0.8,
                        'fixed': False,
                        'limit_depth_chs': True}
 snr = 3
 lambda2 = 1.0 / snr ** 2
-apply_inverse_params = {'method': "dSPM", 'pick_ori': None, 'pick_normal': None}
+apply_inverse_params = {'method': "dSPM", 'pick_ori': None,
+                        'pick_normal': None}
 
-# MAIN #########################################################################
+# MAIN ANALYSES #######################################################
 passive = dict(cond='stim_active', values=[2])
-missed = dict(cond='motor', values=[0])
+missed = dict(cond='motor_missed', values=[True])
 contrasts = (
             dict(include=dict(cond='stim_side', values=[1, 2]),
                  exclude=[passive]),
@@ -138,13 +123,13 @@ contrasts = (
                  exclude=[passive, missed])
             )
 
-decoding_preproc_S = dict(decim=5, crop=dict(tmin=0., tmax=0.600))
-decoding_preproc_M = dict(decim=5, crop=dict(tmin=-0.500, tmax=0.100))
+
+decoding_preproc_S = dict(decim=5, crop=dict(tmin=0., tmax=0.700))
+decoding_preproc_M = dict(decim=5, crop=dict(tmin=-0.600, tmax=0.100))
 decoding_preproc = [decoding_preproc_S, decoding_preproc_M]
 
 
 # STATS ########################################################################
-
 clu_sigma = 1e3
 clu_n_permutations = 1024
 clu_threshold = 0.05

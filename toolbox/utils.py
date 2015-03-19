@@ -32,4 +32,4 @@ def decim(inst, decim):
         inst._data = inst._data[:,:,::decim]
         inst.info['sfreq'] /= decim
         inst.times = inst.times[::decim]
-    return inst
+    return inst    

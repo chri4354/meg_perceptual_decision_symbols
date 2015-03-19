@@ -40,7 +40,7 @@ ln -sf watershed/${SUBJECT}_outer_skull_surface ${SUBJECT}-outer_skull.surf
 # # mne_setup_mri --overwrite
 #
 # # # Make high resolution head surface
-mne make_scalp_surfaces --overwrite -f --subject ${SUBJECT} --subjects-dir $STUDY_PATH
+mne make_scalp_surfaces --overwrite -f --subject ${SUBJECT} --subjects-dir $STUDY_PATH/subjects
 # # if the previous command fails you can use the --force option.
 #
 # # # # Generate morph maps for morphing between sample and fsaverage

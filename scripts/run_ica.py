@@ -41,7 +41,7 @@ for subject in subjects:
             continue
         raw_ = Raw(fname, preload=True)
         # decimate
-        decim_ = 10 # XXX pass through config
+        decim_ = 1 # XXX pass through config
         raw_ = decim(raw_, decim_)
         # Append
         if r == 0:

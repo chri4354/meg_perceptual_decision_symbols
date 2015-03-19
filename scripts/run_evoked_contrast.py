@@ -44,7 +44,12 @@ for subject in subjects:
                             '{}-{}-epo.fif'.format(ep_name, subject))
         epochs = mne.read_epochs(epo_fname)
 
+        # name of evoked file
+        ave_fname = op.join(data_path, 'MEG', subject,
+                            '{}-{}-contrasts-ave.fif'.format(ep_name, subject))
+
         # Apply each contrast
+        all_evokeds = list()
         for contrast in contrasts:
             evokeds = list()
 
@@ -52,7 +57,7 @@ for subject in subjects:
             exclude = np.any([events[x['cond']]==ii
                                 for x in contrast['exclude']
                                     for ii in x['values']],
-                            axis=0)
+                             axis=0)
 
             # Select condition
             for value in contrast['include']['values']:
@@ -60,28 +65,28 @@ for subject in subjects:
                 include = events[contrast['include']['cond']]==value
                 # Evoked data
                 evoked = epochs[include * (exclude==False)].average()
-                evoked.comment = contrast['include']['cond']+str(value)
+                evoked.comment = contrast['name']+str(value)
+                # keep for contrast
                 evokeds.append(evoked)
+                # keep for saving
+                all_evokeds.append(evoked)
 
             # Apply contrast
-            contrast = evokeds[0] - evokeds[1]
+            diff = evokeds[0] - evokeds[1]
 
             # Plot
-            fig = contrast.plot()
+            fig = diff.plot()
             report.add_figs_to_section(fig, ('%s: %s (butterfly)'
-                                             % (ep_name, contrast.comment)),
+                                             % (ep_name, diff.comment)),
                                        subject)
-            plot_times = np.linspace(contrast.times.min(),
-                                     contrast.times.max(),
+            plot_times = np.linspace(diff.times.min(),
+                                     diff.times.max(),
                                      10)
-            fig = contrast.plot_topomap(plot_times, ch_type='mag')
+            fig = diff.plot_topomap(plot_times, ch_type='mag')
             report.add_figs_to_section(fig, ('%s: %s (topo)'
-                                             % (ep_name, contrast.comment)),
+                                             % (ep_name, diff.comment)),
                                        subject)
-            # Save contrast
-            ave_fname = op.join(data_path, 'MEG', subject,
-                                '{}-{}-{}-ave.fif'.format(ep_name, subject,
-                                                          contrast.comment))
-            contrast.save(ave_fname)
+        # Save all_evokeds
+        mne.write_evokeds(ave_fname, all_evokeds)
 
 report.save(open_browser=open_browser)

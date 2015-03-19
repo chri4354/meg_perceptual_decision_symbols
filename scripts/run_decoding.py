@@ -85,15 +85,15 @@ for subject in subjects:
             y = np.array(events[cond_name].tolist())
 
             # Apply contrast
-            # from sklearn.preprocessing import StandardScaler
-            # from sklearn.pipeline import Pipeline
-            # from sklearn.svm import SVC
-            # scaler = StandardScaler()
-            # svc = SVC(C=1, kernel='linear', probability=True)
-            # clf = Pipeline([('scaler', scaler), ('svc', svc)])
-            # gat = GeneralizationAcrossTime(n_jobs=-1, clf=clf,
-            #                                predict_type='predict_proba')
-            gat = GeneralizationAcrossTime(n_jobs=-1)
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.pipeline import Pipeline
+            from sklearn.svm import SVC
+            scaler = StandardScaler()
+            svc = SVC(C=1, kernel='linear', probability=True)
+            clf = Pipeline([('scaler', scaler), ('svc', svc)])
+            gat = GeneralizationAcrossTime(n_jobs=-1, clf=clf,
+                                           predict_type='predict_proba')
+            # gat = GeneralizationAcrossTime(n_jobs=-1)
             gat.fit(epochs[sel], y=y[sel])
             gat.score(epochs[sel], y=y[sel])
 

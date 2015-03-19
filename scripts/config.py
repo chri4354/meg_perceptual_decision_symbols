@@ -52,6 +52,7 @@ raw_fname_tmp = 'run_{:02d}_sss.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (
     highpass, lowpass)
 # XXX any reason why -eve. but _raw?
+mri_fname_tmp = 'run_{:02d}_sss-trans.fif'
 events_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss-eve.fif' % (
     highpass, lowpass)
 forward_fname_tmp = '{}-meg-oct-6-fwd.fif'
@@ -113,19 +114,23 @@ apply_inverse_params = {'method': "dSPM", 'pick_ori': None,
 passive = dict(cond='stim_active', values=[2])
 missed = dict(cond='motor_missed', values=[True])
 contrasts = (
-            dict(include=dict(cond='stim_side', values=[1, 2]),
+            dict(name='stim_side',
+                 include=dict(cond='stim_side', values=[1, 2]),
                  exclude=[passive]),
-            dict(include=dict(cond='stim_category', values=[0.0, 1.0]),
+            dict(name='stim_category',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
                  exclude=[passive]),
-            dict(include=dict(cond='motor_side', values=[1, 2]),
+            dict(name='motor_side',
+                 include=dict(cond='motor_side', values=[1, 2]),
                  exclude=[passive, missed]),
-            dict(include=dict(cond='motor_category', values=[0, 1]),
+            dict(name='motor_category',
+                 include=dict(cond='motor_category', values=[0, 1]),
                  exclude=[passive, missed])
             )
 
 
-decoding_preproc_S = dict(decim=5, crop=dict(tmin=0., tmax=0.700))
-decoding_preproc_M = dict(decim=5, crop=dict(tmin=-0.600, tmax=0.100))
+decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
+decoding_preproc_M = dict(decim=2, crop=dict(tmin=-0.600, tmax=0.100))
 decoding_preproc = [decoding_preproc_S, decoding_preproc_M]
 
 

@@ -62,14 +62,18 @@ filtersize = 16384
 
 # FILENAMES ###########################################################
 raw_fname_tmp = 'run_{:02d}_sss.fif'
-raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (
-    highpass, lowpass)
+raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (highpass, lowpass)
 # XXX any reason why -eve. but _raw?
 mri_fname_tmp = 'run_{:02d}_sss-trans.fif'
-events_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss-eve.fif' % (
-    highpass, lowpass)
-forward_fname_tmp = '{}-meg-oct-6-fwd.fif'
-morph_mat_fname_tmp = '{}-morph_mat.mat'
+events_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss-eve.fif' % (highpass, lowpass)
+fwd_fname_tmp = '{:s}-meg-fwd.fif'
+inv_fname_tmp = '{:s}-meg-inv.fif'
+cov_fname_tmp = '{:s}-meg-cov.fif'
+src_fname_tmp = '{:s}-oct-6-src.fif'
+
+# morph_mat_fname_tmp = '{}-morph_mat.mat'
+
+
 
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
@@ -113,7 +117,7 @@ cov_method = ['shrunk', 'empirical']
 
 # INVERSE #############################################################
 fsave_grade = 4
-fwd_fname_tmp = 'sub{:02d}-meg-oct-6-fwd.fif'
+# fwd_fname_tmp = 'sub{:02d}-meg-oct-6-fwd.fif' # XXX check file name
 make_inverse_params = {'loose': 0.2,
                        'depth': 0.8,
                        'fixed': False,

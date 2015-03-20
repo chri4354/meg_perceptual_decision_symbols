@@ -110,9 +110,14 @@ class cluster_stat(dict):
         self.T_obs_, self.clusters_, self.cluster_p_values_, self.H0_ = clu = \
             spatio_temporal_cluster_1samp_test(X, connectivity=connectivity,
                                                n_jobs=self.n_jobs,
-                                               threshold=self.t_threshold)
+                                               threshold=self.t_threshold) # ,
+                                            #    out_type='mask'
         # Save cluster indices
         self.good_cluster_inds_ = np.where(self.cluster_p_values_ < self.alpha)[0]
+        # for non threshold cluster permutation pass a dictionary of t_thresholds
+        # re organize the output # XXX tfce
+        # self.clusters_ = np.sum([self.clusters_[i] for i in good_cluster_inds], axis=0).astype(bool)
+        # XXX TEST FROM HERE WITH NEW OUTPUT TYPE
         return
 
     def plot_cluster_topo(self, i_clu=0, fig=None, ax=None, show=True):

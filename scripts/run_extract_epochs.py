@@ -7,7 +7,7 @@ import os.path as op
 import numpy as np
 import mne
 from mne.io import Raw
-from mne.io.pick import _picks_by_type as picks_by_type
+from mne.io.pick import _picks_by_type as picks_by_type # XXX users should not need this
 from mne.preprocessing import read_ica
 from mne.viz import plot_drop_log
 

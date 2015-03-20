@@ -36,15 +36,28 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm',
             'subject13_cg', 'subject14_ap', 'subject15_tb',
             'subject16_mc', 'subject17_az']
 
-exclude_subjects = []
+# SUBJECT 07: manual fix: head surface is not closed X used original sb-head.fif instead of medium resolution
+# SUBJECT 13: manual fix: head surface is not closed X used original sb-head.fif instead of medium resolution
+# SUBJECT 05: freesurfer crashed
+# SUBJECT 10: freesurfer crashed
+# SUBJECT 01: MISSING MRI
+# SUBJECT 12: MISSING MRI
+# SUBJECT 15: MISSING MRI
+# SUBJECT 16: MISSING MRI
+# SUBJECT 17: MISSING MRI
+
+missing_mri = ['subject01_ar', 'subject05_cl', 'subject07_sb', 'subject12_ea',
+               'subject15_tb', 'subject16_mc', 'subject17_az']
+
+exclude_subjects = missing_mri
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 11, 1))  # 10 runs per subject, starting from 1
 
 # FILRERING ###########################################################
-lowpass = 30
-highpass = 0.75
+lowpass = 35
+highpass = 0
 filtersize = 16384
 
 # FILENAMES ###########################################################

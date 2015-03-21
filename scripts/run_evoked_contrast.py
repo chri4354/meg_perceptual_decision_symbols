@@ -76,16 +76,16 @@ for subject in subjects:
 
             # Plot
             fig = diff.plot()
-            report.add_figs_to_section(fig, ('%s: %s (butterfly)'
-                                             % (ep_name, diff.comment)),
-                                       subject)
+            report.add_figs_to_section(fig, ('%s (%s) %s: butterfly'
+                % (subject, ep_name, diff.comment)), 'Butterfly: ' + ep_name)
             plot_times = np.linspace(diff.times.min(),
                                      diff.times.max(),
                                      10)
-            fig = diff.plot_topomap(plot_times, ch_type='mag')
-            report.add_figs_to_section(fig, ('%s: %s (topo)'
-                                             % (ep_name, diff.comment)),
-                                       subject)
+            fig = diff.plot_topomap(plot_times, ch_type='mag', sensors=False,
+                                    contours=False)
+            report.add_figs_to_section(fig, ('%s (%s) %s: (topo)'
+                % (subject, ep_name, diff.comment)), 'Topo: ' + ep_name)
+
         # Save all_evokeds
         mne.write_evokeds(ave_fname, all_evokeds)
 

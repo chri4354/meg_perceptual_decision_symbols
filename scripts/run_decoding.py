@@ -99,14 +99,14 @@ for subject in subjects:
 
             # Plot
             fig = gat.plot_diagonal(show=False)
-            report.add_figs_to_section(fig, ('%s: %s (decoding)'
-                                             % (ep_name, cond_name)),
-                                       subject)
+            report.add_figs_to_section(fig, ('%s (%s) %s: (decoding)'
+                                             % (subject, ep_name, cond_name)),
+                                       'Decoding: ' + ep_name)
 
             fig = gat.plot(show=False)
-            report.add_figs_to_section(fig, ('%s: %s (GAT)'
-                                             % (ep_name, cond_name)),
-                                       subject)
+            report.add_figs_to_section(fig, ('%s (%s) %s: GAT'
+                                             % (subject, ep_name, cond_name)),
+                                       'GAT: ' + ep_name)
             # Save contrast
             pkl_fname = op.join(data_path, 'MEG', subject,
                                 '{}-{}-decod_{}.pickle'.format(ep_name, subject,

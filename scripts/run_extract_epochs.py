@@ -107,7 +107,6 @@ for subject in subjects:
             # Append runs
             epochs_list.append(epochs)
 
-            print(len(epochs))
 
     # Save and report
     for name, epochs_list in zip([ep['name'] for ep in epochs_params], all_epochs):
@@ -119,24 +118,25 @@ for subject in subjects:
         # Plot
         #-- % dropped
         report.add_figs_to_section(
-            plot_drop_log(epochs.drop_log), 'total dropped {}'.format(
-                name), subject)
+            plot_drop_log(epochs.drop_log), '%s (%s): total dropped'
+                          % (subject, name), 'Drop: ' + name)
         #-- % trigger channel
         ch = mne.pick_channels(epochs.ch_names, 'STI101')
         epochs._data[:, ch,:] = np.log(epochs._data[:, ch,:]) + 1
         fig = mne.viz.plot_image_epochs(epochs, ch, scalings=dict(stim=132),
                                         units=dict(stim=''))
-        report.add_figs_to_section(fig, 'STI101 %s' % name, subject)
+        report.add_figs_to_section(fig, '%s (%s): triggers' % (subject, name),
+                                   'Triggers: ' + name)
 
         #-- % evoked
         evoked = epochs.average()
         fig = evoked.plot()
-        report.add_figs_to_section(fig, 'Mean ERF %s: butterfly' % name,
-                                   subject)
+        report.add_figs_to_section(fig, '%s (%s): butterfly' % (subject, name),
+                                   'Butterfly: ' + name)
         times = np.arange(epochs.tmin, epochs.tmax,
                           (epochs.tmax - epochs.tmin) / 20)
         fig = evoked.plot_topomap(times, ch_type='mag')
-        report.add_figs_to_section(fig, 'Mean ERF %s: topo' % name, subject)
-
+        report.add_figs_to_section(fig, '%s (%s): topo' % (subject, name),
+                                   'Topo: ' + name)
 
 report.save(open_browser=open_browser)

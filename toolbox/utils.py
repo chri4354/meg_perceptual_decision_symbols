@@ -1,5 +1,35 @@
 import numpy as np
 
+def fill_betweenx_discontinuous(ax, ymin, ymax, x, **kwargs):
+    """Fill betwwen x even if x is discontinuous clusters
+    Parameters
+    ----------
+    ax : axis
+    x : list
+
+    Returns
+    -------
+    ax : axis
+    """
+    x = np.array(x)
+    while np.any(x):
+        # If with single time point
+        if len(x) > 1:
+            xmax = np.where((x[1:] - x[:-1]) > 1)[0]
+        else:
+            xmax = [0]
+
+        # If continuous
+        if not np.any(xmax):
+            xmax = [len(x) - 1]
+
+        ax.fill_betweenx((ymin, ymax), x[0], x[xmax[0]], **kwargs)
+
+        # remove from list
+        x = x[(xmax[0] + 1):]
+    return ax
+
+
 def resample_epochs(epochs, sfreq):
     """faster resampling"""
     # from librosa import resample
@@ -36,347 +66,247 @@ def decim(inst, decim):
     return inst
 
 
+def EvokedList_to_Epochs(inst, info=None, events=None):
+    """Convert list of evoked into single epochs
+
+    Parameters
+    ----------
+    inst: list
+        list of evoked objects.
+    info : dict
+        By default copy dict from inst[0]
+    events : np.array (dims: n, 3)
+    Returns
+    -------
+    epochs: epochs object"""
+    from mne.epochs import EpochsArray
+    from mne.evoked import Evoked
+
+    if (not(isinstance(inst, list)) or
+        not np.all([isinstance(x, Evoked) for x in inst])):
+        raise('inst mus be a list of evoked')
+
+    # concatenate signals
+    data = [x.data for x in inst]
+    # extract meta data
+    if info is None:
+        info = inst[0].info
+    if events is None:
+        n = len(inst)
+        events = np.c_[np.cumsum(np.ones(n)) * info['sfreq'],
+                                 np.zeros(n), np.ones(n)]
+
+    return EpochsArray(data, info, events=events)
+
+
 class cluster_stat(dict):
-    """"""
-    def __init__(self, insts, pos=None, alpha=0.05, p_threshold=0.001,
-                 t_threshold=None, connectivity='neuromag306mag', n_jobs=-1):
-        """"""
-        from mne.evoked import Evoked
-        from mne.epochs import _BaseEpochs
+    """ Cluster statistics """
+    def __init__(self, insts, alpha=0.05,
+                 connectivity='neuromag306mag', **kwargs):
+        """
+        Parameters
+        ----------
+        insts : list
+            list of Epochs, or of lists of Evoked corresponding to each
+            condition
+        alpha : float
+            significance level
+        connectivity:
 
-        # intialize vars
-        init = lambda: [list() for i in range(len(insts))]
-        signals, conds, times, comments, chans = \
-            init(), init(), init(), init(), init()
+        Can take spatio_temporal_cluster_1samp_test() parameters.
 
-        # for each condition, extract data and meta data
-        for inst, signal, time, comment, chan in \
-            zip(insts, signals, times, comments, chans):
-            if isinstance(inst, list):
-                if not np.all([isinstance(x, Evoked) for x in inst]):
-                    raise('inst must be a list of Evokeds or an Epochs object')
-                # concatenate signals
-                signal.append([x.data for x in inst])
-                # extract meta data
-                summarize = lambda x: x[0] if np.all([i == x[0] for i in x]) else None
-                time.append(summarize([x.times for x in inst]))
-                comment.append(summarize([x.comment for x in inst]))
-                chan.append(summarize([x.ch_names for x in inst]))
-            elif isinstance(inst, _BaseEpochs):
-                signal.append(x._data)
-                time.append(x.time)
-                comments.append(x.comments)
-            else:
-                raise('inst must be a list of Evokeds or an Epochs object')
-        # keep variables
-        self.signals_ = np.squeeze(signals, axis=1)
-        self.times_ = np.squeeze(times, axis=1)
-        self.comments_ = np.squeeze(comments, axis=1)
-        self.pos = pos # for plotting
-        self.alpha = alpha
-        self.p_threshold = p_threshold
-        self.t_threshold = t_threshold
-        self.connectivity = connectivity
-        self.n_jobs = n_jobs
-        self.stats()
-        return
-
-    def stats(self):
-        """"""
-        from scipy import stats as stats
+        """
         from mne.stats import (spatio_temporal_cluster_1samp_test,
                                summarize_clusters_stc)
         from mne.channels import read_ch_connectivity
 
-        # check dimensionality
-        if len(self.signals_) != 2:
-            raise('paired test should only have two datasets')
-        if np.shape(self.signals_[0]) != np.shape(self.signals_[1]):
-            raise('The dimensionality of the two datasets must be identical')
-        n_subjects = np.shape(self.signals_[0])[0]
+        # Convert lists of evoked in Epochs
+        insts = [EvokedList_to_Epochs(i) if type(i) is list else i for i in insts]
 
         # Apply contrast: n * space * time
-        X = np.array(self.signals_[0] - self.signals_[1]).transpose([0, 2, 1])
+        X = np.array(insts[0]._data - insts[1]._data).transpose([0, 2, 1])
 
-        if self.t_threshold is None:
-            self.t_threshold = -stats.distributions.t.ppf(self.p_threshold / 2.,
-                                                          n_subjects - 1)
-
-        # load FieldTrip neighbor definition to setup sensor connectivity
-        if type(self.connectivity) is str:
-            connectivity, ch_names = read_ch_connectivity(self.connectivity)
+        # load sensor connectivity
+        if type(connectivity) is str:
+            connectivity, ch_names = read_ch_connectivity(connectivity)
 
         # Run stats
-        self.T_obs_, self.clusters_, self.cluster_p_values_, self.H0_ = clu = \
+        self.T_obs_, clusters, p_values, _ = \
             spatio_temporal_cluster_1samp_test(X, connectivity=connectivity,
-                                               n_jobs=self.n_jobs,
-                                               threshold=self.t_threshold) # ,
-                                            #    out_type='mask'
-        # Save cluster indices
-        self.good_cluster_inds_ = np.where(self.cluster_p_values_ < self.alpha)[0]
-        # for non threshold cluster permutation pass a dictionary of t_thresholds
-        # re organize the output # XXX tfce
-        # self.clusters_ = np.sum([self.clusters_[i] for i in good_cluster_inds], axis=0).astype(bool)
-        # XXX TEST FROM HERE WITH NEW OUTPUT TYPE
+                                               out_type='mask', **kwargs)
+
+        # Save sorted sig clusters
+        inds = np.argsort(p_values)
+        clusters = np.array(clusters)[inds,:,:]
+        p_values = p_values[inds]
+        inds = np.where(p_values < alpha)[0]
+        self.sig_clusters_ = clusters[inds,:,:]
+        self.p_values_ = p_values[inds]
+        self.insts = insts
+
         return
 
-    def plot_cluster_topo(self, i_clu=0, fig=None, ax=None, show=True):
-        """"""
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        from mne.viz import plot_topomap, tight_layout
 
-        #  XXX default: takes times of first cond
-        times = self.times_[0] * 1000
+    def _get_mask(self, i_clu):
+        """
+        Selects or combine clusters
+
+        Parameters
+        ----------
+        i_clu : int
+            cluster index
+
+        Returns
+        -------
+        mask : np.array
+        space_inds : np.array
+        times_inds : np.array
+        """
+        # Select or combine clusters
+        if i_clu is None:
+            mask = np.sum(self.sig_clusters_, axis=0)
+        else:
+            mask = self.sig_clusters_[i_clu]
 
         # unpack cluster infomation, get unique indices
-        time_inds, space_inds = np.squeeze(self.clusters_[self.good_cluster_inds_[i_clu]])
-        ch_inds = np.unique(space_inds)
-        time_inds = np.unique(time_inds)
+        space_inds = np.where(np.sum(mask, axis=0))[0]
+        time_inds = np.where(np.sum(mask, axis=1))[0]
 
-        # get topography for F stat
-        f_map = self.T_obs_[time_inds, ...].mean(axis=0)
+        return mask, space_inds, time_inds
 
-        # significant time
-        sig_times = times[time_inds]
 
-        # create spatial mask
-        mask = np.zeros((f_map.shape[0], 1), dtype=bool)
-        mask[ch_inds, :] = True
+    def plot_topo(self, i_clu=None, pos=None, **kwargs):
+        """
+        Plots fmap of one or several clusters.
 
-        # initialize figure
-        if fig is None:
-            fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111)
+        Parameters
+        ----------
+        i_clu : int
+            cluster index
 
-        title = 'Cluster #{0}'.format(i_clu)
-        ax.set_title(title, fontsize=14)
+        Can take evoked.plot_topomap() parameters.
+
+        Returns
+        -------
+        fig
+        """
+        from mne import find_layout
+        from mne.viz import plot_topomap
+
+        # Channel positions
+        pos = find_layout(self.insts[0].info).pos
+        # create topomap mask from sig cluster
+        mask, space_inds, time_inds = self._get_mask(i_clu)
+
+        if pos is None:
+            pos = find_layout(self.insts[0].info).pos
 
         # plot average test statistic and mark significant sensors
-        image, _ = plot_topomap(f_map, self.pos, mask=mask, axis=ax,
-                                cmap='binary', vmin=np.min, vmax=np.max)
+        topo = self.T_obs_[time_inds, :].mean(axis=0)
+        fig = plot_topomap(topo, pos, **kwargs)
 
-        # advanced matplotlib for showing image with figsure and colorbar
-        # in one plot
-        divider = make_axes_locatable(ax)
-
-        ax.set_xlabel('Averaged F-map ({:0.1f} - {:0.1f} s)'.format(
-                           *sig_times[[0, -1]]))
-        # add axes for colorbar
-        ax_colorbar = divider.append_axes('right', size='5%', pad=0.05)
-        plt.colorbar(image, cax=ax_colorbar)
-
-        if show:
-            plt.show()
-        return fig
-
-    def plot_evoked_time(self, i_clu=0, linestyles=None, condition_names=None,
-                          colors=None, fig=None, ax=None, show=True):
-        """"""
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        from mne.viz import plot_topomap, tight_layout
-
-        if condition_names is None:
-            condition_names = [c for c in self.comments_]
-        if colors is None:
-            colors = 'r', 'steelblue'  # XXX adapt for more than 2 conditions
-        if linestyles is None:
-            linestyles = '-', '-' # XXX adapt for more than 2 conditions
-
-        #  XXX default: takes times of first cond
-        times = self.times_[0] * 1000
-
-        # unpack cluster infomation, get unique indices
-        time_inds, space_inds = np.squeeze(self.clusters_[self.good_cluster_inds_[i_clu]])
-        ch_inds = np.unique(space_inds)
-        time_inds = np.unique(time_inds)
-
-        # get average signals at significant sensors
-        avgs = [x[..., ch_inds].mean(axis=-1) for x in self.signals_]
-        sig_times = times[time_inds]
-
-        # initialize figure
-        if fig is None:
-            fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111)
-
-        # add new axis for time courses and plot time courses
-        for signal, col, ls in zip(self.signals_, colors, linestyles):
-            signal = np.mean(signal, axis=0).transpose()
-            ax.plot(times, signal, color=col, linestyle=ls)
-
-        # add information
-        ax.axvline(0, color='k', linestyle=':', label='stimulus onset')
-        ax.set_xlim([times[0], times[-1]])
-        ax.set_xlabel('Time [ms]')
-        ax.set_ylabel('Evoked magnetic fields [fT]')
-
-        # plot significant time range
-        ymin, ymax = ax.get_ylim()
-        ax.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
-                                 color='orange', alpha=0.3)
-        ax.legend(loc='lower right')
-        ax.set_ylim(ymin, ymax)
-
-        if show:
-            plt.show()
-        return fig
-
-    def plot_cluster_time(self, i_clu=0, linestyles=None, condition_names=None,
-                          colors=None, fig=None, ax=None, show=True):
-        """"""
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        from mne.viz import plot_topomap, tight_layout
-
-        if condition_names is None:
-            condition_names = [c for c in self.comments_]
-        if colors is None:
-            colors = 'r', 'steelblue'  # XXX adapt for more than 2 conditions
-        if linestyles is None:
-            linestyles = '-', '-' # XXX adapt for more than 2 conditions
-
-        #  XXX default: takes times of first cond
-        times = self.times_[0] * 1000
-
-        # unpack cluster infomation, get unique indices
-        time_inds, space_inds = np.squeeze(self.clusters_[self.good_cluster_inds_[i_clu]])
-        ch_inds = np.unique(space_inds)
-        time_inds = np.unique(time_inds)
-
-        # initialize figure
-        if fig is None:
-            fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111)
-
-        # get average signals of the cluster for each condition
-        avgs = [x[:, ch_inds, :].mean(axis=1).mean(axis=0) for x in self.signals_]
-        sig_times = times[time_inds]
-
-        # add new axis for time courses and plot time courses
-        for signal, col, ls in zip(avgs, colors, linestyles):
-            ax.plot(times, signal, color=col, linestyle=ls)
-
-        # add information
-        ax.axvline(0, color='k', linestyle=':', label='stimulus onset')
-        ax.set_xlim([times[0], times[-1]])
-        ax.set_xlabel('Time [ms]')
-        ax.set_ylabel('Evoked magnetic fields [fT]')
-
-        # plot significant time range
-        ymin, ymax = ax.get_ylim()
-        ax.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
-                                 color='orange', alpha=0.3)
-        ax.legend(loc='lower right')
-        ax.set_ylim(ymin, ymax)
-
-        if show:
-            plt.show()
         return fig
 
 
-    def plot(self, colors=None, linestyles=None, condition_names=None, show=True):
-        """"""
-        import numpy as np
+    def plot_topomap(self, i_clu=None, **kwargs):
+        """
+        Plots effect topography and highlights significant selected clusters.
+
+        Parameters
+        ----------
+        i_clu : int
+            cluster index
+
+        Can take evoked.plot_topomap() parameters.
+
+        Returns
+        -------
+        fig
+        """
+        # create topomap mask from sig cluster
+        mask, space_inds, time_inds = self._get_mask(i_clu)
+
+        # plot average test statistic and mark significant sensors
+        evoked = self.insts[0].average()
+        evoked._data = self.T_obs_
+        fig = evoked.plot_topomap(mask=np.transpose(mask), **kwargs)
+
+        return fig
+
+
+    def plot(self, plot_type='butterfly', i_clus=None, axes=None, show=True,
+             **kwargs):
+        """
+        Plots effect time course and highlights significant selected clusters.
+
+        Parameters
+        ----------
+        i_clus : None | list | int
+            cluster indices
+        plot_type : str
+            'butterfly' to plot differential response across all channels
+            'cluster' to plot cluster time course for each condition
+
+        Can take evoked.plot() parameters.
+
+        Returns
+        -------
+        fig
+        """
         import matplotlib.pyplot as plt
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        from mne.viz import plot_topomap, tight_layout
+        from mne.viz.utils import COLORS
 
-        if condition_names is None:
-            condition_names = [c for c in self.comments_]
-        if colors is None:
-            colors = 'r', 'steelblue'  # XXX adapt for more than 2 conditions
-        if linestyles is None:
-            linestyles = '-', '--' # XXX adapt for more than 2 conditions
+        times = self.insts[0].times  * 1000
 
-        #  XXX default: takes times of first cond
-        times = self.times_[0]
-        # loop over significant clusters
-        figs = [list() for i in range(len(self.good_cluster_inds_))]
-        for i_clu, clu_idx in enumerate(self.good_cluster_inds_):
-            figs[i_clu], ax_topo = plt.subplots(1, 1, figsize=(10, 3))
-
-            # topo
-            self.plot_cluster_topo(i_clu, fig=figs[i_clu], ax=ax_topo, show=False)
-
-            # time signals
-            divider = make_axes_locatable(ax_topo)
-            ax_signals = divider.append_axes('right', size='300%', pad=1.2)
-            self.plot_cluster_time(i_clu, fig=figs[i_clu], ax=ax_signals, show=False)
-
-            # clean up viz
-            tight_layout(fig=figs[i_clu])
-            figs[i_clu].subplots_adjust(bottom=.05)
-
-        if show:
-            plt.show()
-        return figs
-
-    def plot_evoked_time(self, plot_diff=True, linestyles=None,
-                         condition_names=None,
-                         colors=None, fig=None, ax=None, show=True):
-        """"""
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        from mne.viz import plot_topomap, tight_layout
-
-        if condition_names is None:
-            condition_names = [c for c in self.comments_]
-        if colors is None:
-            colors = 'r', 'steelblue'  # XXX adapt for more than 2 conditions
-        if linestyles is None:
-            linestyles = '-', '-' # XXX adapt for more than 2 conditions
-
-        #  XXX default: takes times of first cond
-        times = self.times_[0] * 1000
-
-                # initialize figure
-        if fig is None:
+        # if axes is None:
+        if True:
             fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111)
+            fig.add_subplot(111)
+            axes = fig.axes[0]
 
-        # get average signals of the cluster for each condition
-        avgs = [x[:, :, :].mean(axis=0) for x in self.signals_]
+        # By default, plot separate clusters
+        if i_clus is None:
+            if plot_type == 'butterfly':
+                i_clus = None
+            else:
+                i_clus = range(len(self.sig_clusters_))
+        elif type(i_clus) is int
+            i_clus = [i_clus]
 
-        if not(plot_diff):
-            # add new axis for time courses and plot time courses
-            for signal, col, ls in zip(avgs, colors, linestyles):
-                for ch in signal:
-                    ax.plot(times, ch, color=col, linestyle=ls)
-        else:
-            # add new axis for time courses and plot time courses
-            avgs = avgs[0] - avgs[1]
-            for ch in avgs:
-                ax.plot(times, ch, color='black', linestyle='-')
+        # Time course
+        if plot_type == 'butterfly':
+            # Plot butterfly of difference
+            evoked = self.insts[0].average() - self.insts[1].average()
+            fig = evoked.plot(axes=axes, show=False, **kwargs)
+        elif plot_type == 'cluster':
+            evokeds = [x.average() for x in self.insts]
+            for i_clu in i_clus:
+                _, space_inds, _ = self._get_mask(i_clu)
+                for i_evo, evoked in enumerate(evokeds):
+                    signal = np.mean(evoked.data[space_inds,:],
+                                     axis=0)
+                    _kwargs = kwargs.copy()
+                    _kwargs['color'] = COLORS[i_evo % len(COLORS)]
+                    axes.plot(times, signal, **_kwargs)
 
-        # add information
-        ax.axvline(0, color='k', linestyle=':', label='stimulus onset')
-        ax.set_xlim([times[0], times[-1]])
-        ax.set_xlabel('Time [ms]')
-        ax.set_ylabel('Evoked magnetic fields [fT]')
-
-        # plot significant time range
-        ymin, ymax = ax.get_ylim()
-        for cluster in self.good_cluster_inds_:
-            # unpack cluster infomation, get unique indices
-            time_inds, space_inds = np.squeeze(self.clusters_[cluster]) # XXX
-            ch_inds = np.unique(space_inds)
-            time_inds = np.unique(time_inds)
+        # Significant times
+        ymin, ymax = axes.get_ylim()
+        for i_clu in i_clus:
+            _, _, time_inds = self._get_mask(i_clu)
             sig_times = times[time_inds]
-            ax.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
-                                 color='orange', alpha=0.3)
-        ax.legend(loc='lower right')
-        ax.set_ylim(ymin, ymax)
+            fill_betweenx_discontinuous(axes, ymin, ymax, sig_times,
+                                        color='orange', alpha=0.3)
+
+        axes.legend(loc='lower right')
+        axes.set_ylim(ymin, ymax)
+
+        # add information
+        axes.axvline(0, color='k', linestyle=':', label='stimulus onset')
+        axes.set_xlim([times[0], times[-1]])
+        axes.set_xlabel('Time [s]')
+        axes.set_ylabel('Evoked magnetic fields [fT]')
 
         if show:
             plt.show()
+
         return fig

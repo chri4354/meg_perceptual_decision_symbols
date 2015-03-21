@@ -7,7 +7,7 @@
 # ipython scripts/run_mne_coregistration.sh
 
 # MNE-python
-# ipython scripts/run_filtering.py
+#ipython scripts/run_filtering.py
 ipython scripts/run_ica.py
 ipython scripts/run_extract_events.py
 ipython scripts/run_extract_epochs.py
@@ -20,3 +20,4 @@ ipython scripts/run_assemble_inverse.py
 ipython scripts/run_evoked_contrast.py
 ipython scripts/run_mass_univariate.py
 ipython scripts/run_decoding.py
+ipython scripts/run_mass_univariate.py

@@ -49,7 +49,7 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm',
 missing_mri = ['subject01_ar', 'subject05_cl', 'subject07_sb', 'subject12_ea',
                'subject15_tb', 'subject16_mc', 'subject17_az']
 
-exclude_subjects = missing_mri
+exclude_subjects = [] #missing_mri
 
 subjects = [s for s in subjects if s not in exclude_subjects]
 
@@ -57,7 +57,7 @@ runs = list(range(1, 11, 1))  # 10 runs per subject, starting from 1
 
 # FILRERING ###########################################################
 lowpass = 35
-highpass = 0
+highpass = 0.75
 filtersize = 16384
 
 # FILENAMES ###########################################################

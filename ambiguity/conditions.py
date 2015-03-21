@@ -182,8 +182,6 @@ def extract_events(fname, min_duration=0.003, first_sample=0,
                 # Associate S value to M to link the two
                 trigger_M.append(trigger_M_[M[0]] + trigger_S[s])
 
-    print([len(sample_S), len(sample_M)])
-
     # Combine S and M events
     events_S = [sample_S, np.zeros(len(sample_S)), trigger_S]
     events_M = [sample_M, np.zeros(len(sample_M)), trigger_M]

@@ -270,7 +270,7 @@ class cluster_stat(dict):
                 i_clus = None
             else:
                 i_clus = range(len(self.sig_clusters_))
-        elif type(i_clus) is int
+        elif type(i_clus) is int:
             i_clus = [i_clus]
 
         # Time course

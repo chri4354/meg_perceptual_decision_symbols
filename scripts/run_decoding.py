@@ -22,7 +22,8 @@ from scripts.config import (
     epochs_params,
     open_browser,
     contrasts,
-    decoding_preproc
+    decoding_preproc,
+    decoding_params
 )
 
 
@@ -85,14 +86,7 @@ for subject in subjects:
             y = np.array(events[cond_name].tolist())
 
             # Apply contrast
-            from sklearn.preprocessing import StandardScaler
-            from sklearn.pipeline import Pipeline
-            from sklearn.svm import SVC
-            scaler = StandardScaler()
-            svc = SVC(C=1, kernel='linear', probability=True)
-            clf = Pipeline([('scaler', scaler), ('svc', svc)])
-            gat = GeneralizationAcrossTime(n_jobs=-1, clf=clf,
-                                           predict_type='predict_proba')
+            gat = GeneralizationAcrossTime(**decoding_params)
             # gat = GeneralizationAcrossTime(n_jobs=-1)
             gat.fit(epochs[sel], y=y[sel])
             gat.score(epochs[sel], y=y[sel])
@@ -109,8 +103,9 @@ for subject in subjects:
                                        'GAT: ' + ep_name)
             # Save contrast
             pkl_fname = op.join(data_path, 'MEG', subject,
-                                '{}-{}-decod_{}.pickle'.format(ep_name, subject,
-                                                               cond_name))
+                                '{}-{}-decod_40ms{}.pickle'.format(ep_name, subject,
+                                                               cond_name)) # XXX /!\ REMOVE _40ms in name
+            print('40 ms!')
             with open(pkl_fname, 'w') as f:
                 pickle.dump([gat, contrast], f)
 

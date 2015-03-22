@@ -1,6 +1,6 @@
 import numpy as np
 
-def fill_betweenx_discontinuous(ax, ymin, ymax, x, **kwargs):
+def fill_betweenx_discontinuous(ax, ymin, ymax, x, freq=1, **kwargs):
     """Fill betwwen x even if x is discontinuous clusters
     Parameters
     ----------
@@ -12,10 +12,11 @@ def fill_betweenx_discontinuous(ax, ymin, ymax, x, **kwargs):
     ax : axis
     """
     x = np.array(x)
+    min_gap = (1.1 / freq)
     while np.any(x):
         # If with single time point
         if len(x) > 1:
-            xmax = np.where((x[1:] - x[:-1]) > 1)[0]
+            xmax = np.where((x[1:] - x[:-1]) > min_gap)[0]
         else:
             xmax = [0]
 
@@ -96,7 +97,7 @@ def EvokedList_to_Epochs(inst, info=None, events=None):
         events = np.c_[np.cumsum(np.ones(n)) * info['sfreq'],
                                  np.zeros(n), np.ones(n)]
 
-    return EpochsArray(data, info, events=events)
+    return EpochsArray(data, info, events=events, tmin=inst[0].times.min())
 
 
 class cluster_stat(dict):
@@ -142,7 +143,12 @@ class cluster_stat(dict):
         inds = np.where(p_values < alpha)[0]
         self.sig_clusters_ = clusters[inds,:,:]
         self.p_values_ = p_values[inds]
+
+        # By default, keep meta data from first epoch
         self.insts = insts
+        self.times = self.insts[0].times
+        self.info = self.insts[0].info
+        self.ch_names = self.insts[0].ch_names
 
         return
 
@@ -153,8 +159,9 @@ class cluster_stat(dict):
 
         Parameters
         ----------
-        i_clu : int
-            cluster index
+        i_clu : int | list | array
+            cluster index. If list or array, returns average across multiple
+            clusters.
 
         Returns
         -------
@@ -164,9 +171,11 @@ class cluster_stat(dict):
         """
         # Select or combine clusters
         if i_clu is None:
-            mask = np.sum(self.sig_clusters_, axis=0)
-        else:
+            i_clu = range(len(self.sig_clusters_))
+        if isinstance(i_clu, int):
             mask = self.sig_clusters_[i_clu]
+        else:
+            mask = np.sum(self.sig_clusters_[i_clu], axis=0)
 
         # unpack cluster infomation, get unique indices
         space_inds = np.where(np.sum(mask, axis=0))[0]
@@ -194,12 +203,12 @@ class cluster_stat(dict):
         from mne.viz import plot_topomap
 
         # Channel positions
-        pos = find_layout(self.insts[0].info).pos
+        pos = find_layout(self.info).pos
         # create topomap mask from sig cluster
         mask, space_inds, time_inds = self._get_mask(i_clu)
 
         if pos is None:
-            pos = find_layout(self.insts[0].info).pos
+            pos = find_layout(self.info).pos
 
         # plot average test statistic and mark significant sensors
         topo = self.T_obs_[time_inds, :].mean(axis=0)
@@ -228,7 +237,7 @@ class cluster_stat(dict):
 
         # plot average test statistic and mark significant sensors
         evoked = self.insts[0].average()
-        evoked._data = self.T_obs_
+        evoked.data = self.T_obs_.transpose()
         fig = evoked.plot_topomap(mask=np.transpose(mask), **kwargs)
 
         return fig
@@ -256,7 +265,7 @@ class cluster_stat(dict):
         import matplotlib.pyplot as plt
         from mne.viz.utils import COLORS
 
-        times = self.insts[0].times  * 1000
+        times = self.times  * 1000
 
         # if axes is None:
         if True:
@@ -267,10 +276,10 @@ class cluster_stat(dict):
         # By default, plot separate clusters
         if i_clus is None:
             if plot_type == 'butterfly':
-                i_clus = None
+                i_clus = [None]
             else:
                 i_clus = range(len(self.sig_clusters_))
-        elif type(i_clus) is int:
+        elif isinstance(i_clus, int):
             i_clus = [i_clus]
 
         # Time course
@@ -294,7 +303,9 @@ class cluster_stat(dict):
         for i_clu in i_clus:
             _, _, time_inds = self._get_mask(i_clu)
             sig_times = times[time_inds]
+
             fill_betweenx_discontinuous(axes, ymin, ymax, sig_times,
+                                        freq=(self.info['sfreq'] / 1000),
                                         color='orange', alpha=0.3)
 
         axes.legend(loc='lower right')

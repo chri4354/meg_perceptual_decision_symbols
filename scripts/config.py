@@ -127,7 +127,7 @@ lambda2 = 1.0 / snr ** 2
 apply_inverse_params = {'method': "dSPM", 'pick_ori': None,
                         'pick_normal': None}
 
-# MAIN ANALYSES #######################################################
+# MAIN CONTRASTS #######################################################
 passive = dict(cond='stim_active', values=[2])
 missed = dict(cond='motor_missed', values=[True])
 contrasts = (
@@ -145,10 +145,22 @@ contrasts = (
                  exclude=[passive, missed])
             )
 
-
+# DECODING #####################################################################
+# preprocessing for memory
 decoding_preproc_S = dict(decim=2, crop=dict(tmin=0., tmax=0.700))
 decoding_preproc_M = dict(decim=2, crop=dict(tmin=-0.600, tmax=0.100))
 decoding_preproc = [decoding_preproc_S, decoding_preproc_M]
+
+# specify classifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
+scaler = StandardScaler()
+svc = SVC(C=1, kernel='linear', probability=True)
+clf = Pipeline([('scaler', scaler), ('svc', svc)])
+
+decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba',
+                       train_times=dict(length=0.015, step=0.015))
 
 
 # STATS ########################################################################

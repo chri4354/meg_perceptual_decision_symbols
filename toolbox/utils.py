@@ -67,7 +67,7 @@ def decim(inst, decim):
     return inst
 
 
-def EvokedList_to_Epochs(inst, info=None, events=None):
+def Evokeds_to_Epochs(inst, info=None, events=None):
     """Convert list of evoked into single epochs
 
     Parameters
@@ -102,39 +102,30 @@ def EvokedList_to_Epochs(inst, info=None, events=None):
 
 class cluster_stat(dict):
     """ Cluster statistics """
-    def __init__(self, insts, alpha=0.05,
-                 connectivity='neuromag306mag', **kwargs):
+    def __init__(self, insts, alpha=0.05, **kwargs):
         """
         Parameters
         ----------
-        insts : list
-            list of Epochs, or of lists of Evoked corresponding to each
-            condition
+        X : np.array (dims = n * space * time)
+            data array
         alpha : float
             significance level
-        connectivity:
 
         Can take spatio_temporal_cluster_1samp_test() parameters.
 
         """
-        from mne.stats import (spatio_temporal_cluster_1samp_test,
-                               summarize_clusters_stc)
+        from mne.stats import spatio_temporal_cluster_1samp_test
         from mne.channels import read_ch_connectivity
 
         # Convert lists of evoked in Epochs
-        insts = [EvokedList_to_Epochs(i) if type(i) is list else i for i in insts]
+        insts = [Evokeds_to_Epochs(i) if type(i) is list else i for i in insts]
 
         # Apply contrast: n * space * time
         X = np.array(insts[0]._data - insts[1]._data).transpose([0, 2, 1])
 
-        # load sensor connectivity
-        if type(connectivity) is str:
-            connectivity, ch_names = read_ch_connectivity(connectivity)
-
         # Run stats
         self.T_obs_, clusters, p_values, _ = \
-            spatio_temporal_cluster_1samp_test(X, connectivity=connectivity,
-                                               out_type='mask', **kwargs)
+            spatio_temporal_cluster_1samp_test(X, out_type='mask', **kwargs)
 
         # Save sorted sig clusters
         inds = np.argsort(p_values)

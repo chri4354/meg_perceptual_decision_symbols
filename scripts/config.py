@@ -83,7 +83,7 @@ if not op.exists(results_dir):
 ch_types_used = ['meg']
 
 # ICA #################################################################
-use_ica = True
+use_ica = False
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'

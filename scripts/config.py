@@ -1,7 +1,7 @@
 import os
 import os.path as op
 
-# PATHS ###############################################################
+# PATHS ########################################################################
 base_path = op.dirname(op.dirname(__file__))
 
 data_path = op.join(base_path, 'data', 'ambiguity')
@@ -25,10 +25,10 @@ The directory structure should look like this
 ./data/ambiguity/behavior/
 """
 
-# REPORT ##############################################################
+# REPORT #######################################################################
 open_browser = True
 
-# SUBJECTS ############################################################
+# SUBJECTS #####################################################################
 subjects = ['subject01_ar', 'subject02_as', 'subject03_rm',
             'subject04_jm', 'subject05_cl', 'subject06_ha',
             'subject07_sb', 'subject08_pj', 'subject09_kr',
@@ -55,12 +55,12 @@ subjects = [s for s in subjects if s not in exclude_subjects]
 
 runs = list(range(1, 11, 1))  # 10 runs per subject, starting from 1
 
-# FILRERING ###########################################################
+# FILRERING ####################################################################
 lowpass = 35
 highpass = 0.75
 filtersize = 16384
 
-# FILENAMES ###########################################################
+# FILENAMES ####################################################################
 raw_fname_tmp = 'run_{:02d}_sss.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (highpass, lowpass)
 # XXX any reason why -eve. but _raw?
@@ -79,10 +79,10 @@ results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
     os.mkdir(results_dir)
 
-# SELECTION ###########################################################
+# SELECTION ####################################################################
 ch_types_used = ['meg']
 
-# ICA #################################################################
+# ICA ##########################################################################
 use_ica = False
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
@@ -92,13 +92,13 @@ n_max_eog = 2
 ica_reject = dict(mag=5e-12, grad=5000e-13, eeg=300e-6)
 ica_decim = 50
 
-# EVENTS ##############################################################
+# EVENTS #######################################################################
 # Exceptional case: subject06 run 9 had a trigger test within the
 # recording, need to start collecting events after that/
 events_params = dict(subject06_ha=[dict()] * 9 +
                                   [dict(first_sample=140000)])
 
-# EPOCHS ##############################################################
+# EPOCHS #######################################################################
 # Generic epochs parameters for stimulus-lock and response-lock
 # conditions
 event_id = None
@@ -112,10 +112,10 @@ epochs_resp = dict(name='motor_lock', events='motor', tmin=-0.500,
                    tmax=0.200, baseline=None, **cfg)
 epochs_params = [epochs_stim, epochs_resp]
 
-# COV #################################################################
+# COV ##########################################################################
 cov_method = ['shrunk', 'empirical']
 
-# INVERSE #############################################################
+# INVERSE ######################################################################
 fsave_grade = 4
 # fwd_fname_tmp = 'sub{:02d}-meg-oct-6-fwd.fif' # XXX check file name
 make_inverse_params = {'loose': 0.2,
@@ -127,7 +127,7 @@ lambda2 = 1.0 / snr ** 2
 apply_inverse_params = {'method': "dSPM", 'pick_ori': None,
                         'pick_normal': None}
 
-# MAIN CONTRASTS #######################################################
+# MAIN CONTRASTS ###############################################################
 passive = dict(cond='stim_active', values=[2])
 missed = dict(cond='motor_missed', values=[True])
 contrasts = (

@@ -12,6 +12,7 @@ from scripts.config import (
     cov_fname_tmp,
     fwd_fname_tmp,
     inv_fname_tmp,
+    src_fname_tmp,
     subjects,
     results_dir,
     epochs_params,
@@ -32,10 +33,10 @@ for subject in subjects:
     print(subject)
     # setup paths
     epo_fname = op.join(data_path, 'MEG', subject, '{}-{}-epo.fif'.format('stim_lock', subject))
-    fwd_fname = op.join(data_path, 'MEG', subject, forward_fname_tmp.format(subject))
-    inv_fname = op.join(data_path, 'MEG', subject, inverse_fname_tmp.format(subject))
+    fwd_fname = op.join(data_path, 'MEG', subject, fwd_fname_tmp.format(subject))
+    inv_fname = op.join(data_path, 'MEG', subject, inv_fname_tmp.format(subject))
     cov_fname = op.join(data_path, 'MEG', subject, cov_fname_tmp.format(subject))
-    src_fname = op.join(data_path, 'subjects', subject, 'bem',  src_fname.format(subject))
+    src_fname = op.join(data_path, 'subjects', subject, 'bem',  src_fname_tmp.format(subject))
 
     # XXX loop across channel types
     # Load data

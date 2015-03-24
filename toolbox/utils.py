@@ -1,5 +1,38 @@
 import numpy as np
 
+def plot_eb(x, y, yerr, ax=None, alpha=0.3, color=None, line_args=dict(),
+            err_args=dict()):
+    """
+    Parameters
+    ----------
+    x : list | np.array()
+    y : list | np.array()
+    yerr : list | np.array() | float
+    ax
+    alpha
+    color
+    line_args
+    err_args
+
+    Returns
+    -------
+    ax
+
+    Adapted from http://tonysyu.github.io/plotting-error-bars.html#.VRE9msvmvEU
+    """
+    ax = ax if ax is not None else plt.gca()
+    if color is None:
+        color = ax._get_lines.color_cycle.next()
+    if np.isscalar(yerr) or len(yerr) == len(y):
+        ymin = y - yerr
+        ymax = y + yerr
+    elif len(yerr) == 2:
+        ymin, ymax = yerr
+    ax.plot(x, y,  color=color, **line_args)
+    ax.fill_between(x, ymax, ymin, alpha=alpha, color=color, **err_args)
+
+    return ax
+
 def fill_betweenx_discontinuous(ax, ymin, ymax, x, freq=1, **kwargs):
     """Fill betwwen x even if x is discontinuous clusters
     Parameters

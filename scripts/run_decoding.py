@@ -102,7 +102,7 @@ for subject in subjects:
 
             # Save contrast
             pkl_fname = op.join(data_path, 'MEG', subject,
-                                '%s-%s-decod_%s.pickle' % ep_name, subject,
+                                '%s-%s-decod_%s.pickle' % (ep_name, subject,
                                 contrast['name']))
 
             with open(pkl_fname, 'w') as f:

@@ -167,6 +167,8 @@ contrasts = (
                  exclude=[passive, motor_right]),
             )
 
+contrasts = contrasts[4:]
+
 generalizations = (
             dict(name='active_passive', contrast='stim_category',
                  include=dict(cond='stim_side', values=[1, 2]),

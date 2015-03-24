@@ -93,19 +93,18 @@ for subject in subjects:
 
             # Plot
             fig = gat.plot_diagonal(show=False)
-            report.add_figs_to_section(fig, ('%s (%s) %s: (decoding)'
-                                             % (subject, ep_name, cond_name)),
-                                       'Decoding: ' + ep_name)
+            report.add_figs_to_section(fig, ('%s %s: %s'
+                % (subject, ep_name, contrast['name'])), subject)
 
             fig = gat.plot(show=False)
-            report.add_figs_to_section(fig, ('%s (%s) %s: GAT'
-                                             % (subject, ep_name, cond_name)),
-                                       'GAT: ' + ep_name)
+            report.add_figs_to_section(fig, ('%s %s: %s'
+                % (subject, ep_name, contrast['name'])), subject)
+
             # Save contrast
             pkl_fname = op.join(data_path, 'MEG', subject,
-                                '{}-{}-decod_40ms{}.pickle'.format(ep_name, subject,
-                                                               cond_name)) # XXX /!\ REMOVE _40ms in name
-            print('40 ms!')
+                                '%s-%s-decod_%s.pickle' % ep_name, subject,
+                                contrast['name']))
+
             with open(pkl_fname, 'w') as f:
                 pickle.dump([gat, contrast], f)
 

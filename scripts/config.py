@@ -83,7 +83,7 @@ if not op.exists(results_dir):
 ch_types_used = ['meg']
 
 # ICA ##########################################################################
-use_ica = False
+use_ica = True
 eog_ch = ['EOG061', 'EOG062']
 ecg_ch = 'ECG063'
 n_components = 'rank'
@@ -128,7 +128,16 @@ apply_inverse_params = {'method': "dSPM", 'pick_ori': None,
                         'pick_normal': None}
 
 # MAIN CONTRASTS ###############################################################
+active = dict(cond='stim_active', values=[1])
 passive = dict(cond='stim_active', values=[2])
+new = dict(cond='stim_new', values=[1])
+old = dict(cond='stim_new', values=[0])
+stim_left = dict(cond='stim_side', values=[1])
+stim_right = dict(cond='stim_side', values=[2])
+motor_left = dict(cond='motor_side', values=[1])
+motor_right = dict(cond='motor_side', values=[2])
+
+
 missed = dict(cond='motor_missed', values=[True])
 contrasts = (
             dict(name='stim_side',
@@ -142,8 +151,47 @@ contrasts = (
                  exclude=[passive, missed]),
             dict(name='motor_category',
                  include=dict(cond='motor_category', values=[0, 1]),
-                 exclude=[passive, missed])
+                 exclude=[passive, missed]),
+
+            dict(name='stim_category_stim_left',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, stim_left]),
+            dict(name='stim_category_stim_right',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, stim_right]),
+            dict(name='stim_category_motor_left',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, motor_left]),
+            dict(name='stim_category_motor_right',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, motor_right]),
             )
+
+generalizations = (
+            dict(name='active_passive', contrast='stim_category',
+                 include=dict(cond='stim_side', values=[1, 2]),
+                 exclude=[active]),
+            dict(name='active_passive_new', contrast='stim_category',
+                 include=dict(cond='stim_side', values=[1, 2]),
+                 exclude=[active, old]),
+            dict(name='active_passive_old', contrast='stim_category',
+                 include=dict(cond='stim_side', values=[1, 2]),
+                 exclude=[active, new]),
+            dict(name='stim_left-right', contrast='stim_category_stim_left',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, stim_left]),
+            dict(name='stim_right-left', contrast='stim_category_stim_right',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, stim_right]),
+            dict(name='motor_left-right', contrast='stim_category_motor_left',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, motor_left]),
+            dict(name='stim_right-left', contrast='stim_category_motor_right',
+                 include=dict(cond='stim_category', values=[0.0, 1.0]),
+                 exclude=[passive, motor_right]),
+            )
+
+
 
 # DECODING #####################################################################
 # preprocessing for memory

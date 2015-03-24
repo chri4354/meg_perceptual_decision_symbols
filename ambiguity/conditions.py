@@ -84,6 +84,19 @@ def get_events(bhv_fname, ep_name='both'):
         else:
             raise('problem target_code!')
 
+        # ---- type of passive stimulus
+        if not(event['stim_active']):
+            # [[540, 590],  [560, 580], [SHO, SAO],  [SEO, SCO]]
+            if trial['amb'] == 1:
+                event['stim_new'] = 0
+            elif trial['amb'] == 8:
+                event['stim_new'] = 1
+            else:
+                raise('problem target code')
+        else:
+            event['stim_new'] = 0
+
+
         # ---- stimulus contrast
         if trial['target_code'] in [1, 3, 4, 5]:
             event['stim_contrast'] = event['stim_category']

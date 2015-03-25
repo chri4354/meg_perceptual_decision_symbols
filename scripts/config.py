@@ -47,7 +47,7 @@ subjects = ['subject01_ar', 'subject02_as', 'subject03_rm',
 # SUBJECT 17: MISSING MRI
 
 missing_mri = ['subject01_ar', 'subject05_cl', 'subject07_sb', 'subject12_ea',
-               'subject15_tb', 'subject16_mc', 'subject17_az']
+               'subject16_mc', 'subject17_az']
 
 exclude_subjects = [] #missing_mri
 
@@ -72,8 +72,6 @@ cov_fname_tmp = '{:s}-meg-cov.fif'
 src_fname_tmp = '{:s}-oct-6-src.fif'
 
 # morph_mat_fname_tmp = '{}-morph_mat.mat'
-
-
 
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
@@ -161,13 +159,11 @@ contrasts = (
                  exclude=[passive, stim_right]),
             dict(name='stim_category_motor_left',
                  include=dict(cond='stim_category', values=[0.0, 1.0]),
-                 exclude=[passive, motor_left]),
+                 exclude=[passive, motor_left, missed]),
             dict(name='stim_category_motor_right',
                  include=dict(cond='stim_category', values=[0.0, 1.0]),
-                 exclude=[passive, motor_right]),
+                 exclude=[passive, motor_right, missed]),
             )
-
-contrasts = contrasts[4:]
 
 generalizations = (
             dict(name='active_passive', contrast='stim_category',
@@ -209,8 +205,7 @@ scaler = StandardScaler()
 svc = SVC(C=1, kernel='linear', probability=True)
 clf = Pipeline([('scaler', scaler), ('svc', svc)])
 
-decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba',
-                       train_times=dict(length=0.015, step=0.015))
+decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
 
 
 # STATS ########################################################################

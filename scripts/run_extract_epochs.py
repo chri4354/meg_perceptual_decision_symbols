@@ -15,7 +15,7 @@ from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
 from ambiguity.conditions import events_select_condition
 
-from config import (
+from scripts.config import (
     data_path,
     subjects,
     runs,

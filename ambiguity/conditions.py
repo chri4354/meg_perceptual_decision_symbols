@@ -96,7 +96,6 @@ def get_events(bhv_fname, ep_name='both'):
         else:
             event['stim_new'] = 0
 
-
         # ---- stimulus contrast
         if trial['target_code'] in [1, 3, 4, 5]:
             event['stim_contrast'] = event['stim_category']

@@ -61,6 +61,7 @@ filtersize = 16384
 
 # FILENAMES ####################################################################
 raw_fname_tmp = 'run_{:02d}_sss.fif'
+trans_fname_tmp = 'run_{:02d}_sss-trans.fif'
 raw_fname_filt_tmp = 'run_{:02d}_filt-%d-%d_sss_raw.fif' % (highpass, lowpass)
 # XXX any reason why -eve. but _raw?
 mri_fname_tmp = 'run_{:02d}_sss-trans.fif'
@@ -69,6 +70,7 @@ fwd_fname_tmp = '{:s}-meg-fwd.fif'
 inv_fname_tmp = '{:s}-meg-inv.fif'
 cov_fname_tmp = '{:s}-meg-cov.fif'
 src_fname_tmp = '{:s}-oct-6-src.fif'
+
 
 # morph_mat_fname_tmp = '{}-morph_mat.mat'
 

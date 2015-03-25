@@ -24,9 +24,6 @@ report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
 
-snr = 3.0 # XXX pass to config
-lambda2 = 1.0 / snr ** 2
-
 subjects = [s for s in subjects if s not in missing_mri]
 
 for subject in subjects:
@@ -61,20 +58,16 @@ for subject in subjects:
     write_inverse_operator(inv_fname, inverse_operator_meg)
 
     # Plot report
-    # addfig?
-
-# report.save(open_browser=open_browser)
-
-if False:
-    # XXX to be passed to another function Compute inverse solution
+    snr = 3.0 # XXX pass to config
+    lambda2 = 1.0 / snr ** 2
     stc = apply_inverse(evoked, inverse_operator_meg, lambda2, "dSPM",
-                                pick_ori=None)
+                        pick_ori=None)
 
-
-    ###############################################################################
     # View activation time-series
     fig = plt.figure(figsize=(8, 6))
     plt.plot(1e3 * stc.times, stc.data[::150, :].T)
     plt.ylabel('MEGdSPM value')
     plt.xlabel('Time (ms)')
-    plt.show()
+    report.add_figs_to_section(fig, '{}: Evoked sources'.format(subject), subject)
+
+report.save(open_browser=open_browser)

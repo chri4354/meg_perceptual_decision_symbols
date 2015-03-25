@@ -109,9 +109,6 @@ for subject in subjects:
 
     epochs.pick_channels(picks) # XXX need to be simplified in MNE
 
-    # only take first run # XXX remove this once multi runs rank problem is solved
-    # epochs = epochs[:192]
-
     # Compute the covariance on baseline
     covs = mne.compute_covariance(
         epochs, tmin=None, tmax=0, method=cov_method,

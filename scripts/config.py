@@ -29,25 +29,24 @@ The directory structure should look like this
 open_browser = True
 
 # SUBJECTS #####################################################################
-subjects = ['subject01_ar', 'subject02_as', 'subject03_rm',
-            'subject04_jm', 'subject05_cl', 'subject06_ha',
-            'subject07_sb', 'subject08_pj', 'subject09_kr',
-            'subject10_cs', 'subject11_aj', 'subject12_ea',
-            'subject13_cg', 'subject14_ap', 'subject15_tb',
-            'subject16_mc', 'subject17_az']
+subjects = ['subject01_ar', 'subject02_as', 'subject03_rm', 'subject04_jm',
+            'subject05_cl', 'subject06_ha', 'subject07_sb', 'subject08_pj',
+            'subject09_kr', 'subject10_cs', 'subject11_aj', 'subject12_ea',
+            'subject13_cg', 'subject14_ap', 'subject15_tb', 'subject16_mc',
+            'subject17_az']
 
-# SUBJECT 07: manual fix: head surface is not closed X used original sb-head.fif instead of medium resolution
-# SUBJECT 13: manual fix: head surface is not closed X used original sb-head.fif instead of medium resolution
 # SUBJECT 05: freesurfer crashed
 # SUBJECT 10: freesurfer crashed
 # SUBJECT 01: MISSING MRI
 # SUBJECT 12: MISSING MRI
-# SUBJECT 15: MISSING MRI
 # SUBJECT 16: MISSING MRI
 # SUBJECT 17: MISSING MRI
 
-missing_mri = ['subject01_ar', 'subject05_cl', 'subject07_sb', 'subject12_ea',
-               'subject16_mc', 'subject17_az']
+# SUBJECT 07: manual fix: head surface is not closed X used original sb-head.fif instead of medium resolution
+# SUBJECT 13: manual fix: head surface is not closed X used original sb-head.fif instead of medium resolution
+
+missing_mri = ['subject01_ar', 'subject05_cl', 'subject07_sb', 'subject10_cs',
+               'subject12_ea', 'subject16_mc', 'subject17_az']
 
 exclude_subjects = [] #missing_mri
 

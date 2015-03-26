@@ -90,6 +90,7 @@ for subject in subjects:
             # gat = GeneralizationAcrossTime(n_jobs=-1)
             gat.fit(epochs[sel], y=y[sel])
             gat.score(epochs[sel], y=y[sel])
+            gat.y_pred_ = None # to avoid memory overload
 
             # Plot
             fig = gat.plot_diagonal(show=False)

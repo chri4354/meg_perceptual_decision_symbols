@@ -72,7 +72,7 @@ for subject in subjects:
                 all_evokeds.append(evoked)
 
             # Apply contrast
-            diff = evokeds[0] - evokeds[1]
+            diff = evokeds[0] - evokeds[-1]
 
             # Plot
             fig = diff.plot()

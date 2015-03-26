@@ -154,7 +154,7 @@ class cluster_stat(dict):
         insts = [Evokeds_to_Epochs(i) if type(i) is list else i for i in insts]
 
         # Apply contrast: n * space * time
-        X = np.array(insts[0]._data - insts[1]._data).transpose([0, 2, 1])
+        X = np.array(insts[0]._data - insts[-1]._data).transpose([0, 2, 1])
 
         # Run stats
         self.T_obs_, clusters, p_values, _ = \

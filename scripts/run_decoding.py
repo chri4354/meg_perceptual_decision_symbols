@@ -83,6 +83,11 @@ for subject in subjects:
                 random.shuffle(sel)
                 sel = sel[0:400]
 
+            if len(sel) == 0:
+                warnings.warn('%s: no epoch in %s for %s.' % (subject, ep_name,
+                                                              contrast['name']))
+                continue
+
             y = np.array(events[cond_name].tolist())
 
             # Apply contrast
@@ -90,7 +95,6 @@ for subject in subjects:
             # gat = GeneralizationAcrossTime(n_jobs=-1)
             gat.fit(epochs[sel], y=y[sel])
             gat.score(epochs[sel], y=y[sel])
-            gat.y_pred_ = None # to avoid memory overload
 
             # Plot
             fig = gat.plot_diagonal(show=False)

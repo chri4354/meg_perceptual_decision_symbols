@@ -203,7 +203,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 scaler = StandardScaler()
-svc = SVC(C=1, kernel='linear', probability=True)
+svc = SVC(C=1, kernel='linear', probability=True, class_weight='auto')
 clf = Pipeline([('scaler', scaler), ('svc', svc)])
 
 decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')

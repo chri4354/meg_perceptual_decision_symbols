@@ -61,14 +61,21 @@ for subject in subjects:
             cmap = cmap._lut[:cmap.N,:] * 255
             cmap[:, -1] = np.linspace(-1.0, 1.0, cmap.shape[0]) ** 2 * 255
 
-            brain = diff.plot(subject, subjects_dir=op.join(data_path, 'subjects'),
+            brain = diff.plot(subject,
+                              subjects_dir=op.join(data_path, 'subjects'),
                               surface='inflated', hemi='split',
-                              colormap=cmap, config_opts=dict(height=300., width=600,
-                              offscreen=True))
+                              colormap=cmap, config_opts=dict(height=300.,
+                              width=600, offscreen=True))
 
-            brain.scale_data_colormap(-20, 0, 20, False)
+            mM = np.max([abs(np.min(diff.data)), abs(np.max(diff.data))])
+            brain.scale_data_colormap(-mM, 0, mM, False)
 
-            plot_times = np.linspace(0, 600, 12)
+            # XXX
+            if epoch_params['name'] == 'stim_lock':
+                plot_times = np.linspace(0, 600, 12)
+            else:
+                plot_times = np.linspace(-500, 100, 12)
+
             if 'imgs' in locals(): del imgs
             for t in plot_times:
                 print(t)
@@ -77,7 +84,7 @@ for subject in subjects:
                     brain.set_time(t)
                     x = brain.texts_dict['time_label']['text']
                     x.set(text=x.get('text')['text'][5:-6])
-                    x.set(width=0.3 * len(x.get('text')['text']))
+                    x.set(width=0.1 * len(x.get('text')['text']))
                     img.append(np.vstack(brain.save_imageset(None,
                         views=['lateral', 'medial'], colorbar=None, col=hemi)))
                 img = np.vstack(img)

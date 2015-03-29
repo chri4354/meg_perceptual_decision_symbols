@@ -127,6 +127,7 @@ for epoch_params in epochs_params:
         #                                  time_label='Duration significant (ms)')
         # color scale
         brain.scale_data_colormap(0, min_p_value / 2, min_p_value, True)
+        # XXX Start from here
 
 
         # if 'imgs' in locals(): del imgs

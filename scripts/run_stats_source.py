@@ -95,7 +95,7 @@ for epoch_params in epochs_params:
         #                 contrast, inverse_operator, sample_vertices], f)
 
         # Stats
-        threshold = -stats.distributions.t.ppf(.001 / 2., len(subjects) - 1)
+        threshold = -stats.distributions.t.ppf(.05 / 2., len(subjects) - 1)
         T_obs, clusters, cluster_p_values, H0 = clu = \
             spatio_temporal_cluster_1samp_test(np.transpose(X, (0, 2, 1)),
                                                connectivity=connectivity,
@@ -103,36 +103,38 @@ for epoch_params in epochs_params:
                                                threshold=threshold)
         good_cluster_inds = np.where(cluster_p_values < 0.05)[0]
 
-        diff.data = np.zeros(diff.data.shape)
+        diff._data = np.zeros(np.shape(X)[1:])
         for c in good_cluster_inds:
             for t, v in zip(clusters[c][0], clusters[c][1]):
-                diff.data[t,v] = -np.log10(cluster_p_values[c])
+                diff._data[v, t] = -np.log10(cluster_p_values[c])
+
+        # significant times
+        times_inds = [round(np.mean([clusters[c][0]])) for c in good_cluster_inds]
+        plot_times = [int(diff.times[t] * 1000) for t in times_inds]
+        min_p_value = -np.log10(np.min(cluster_p_values))
 
         # Plot
-        # brain = diff.plot('fsaverage', subjects_dir=op.join(data_path, 'subjects'),
-        #                   surface='inflated', hemi='split', config_opts=dict(height=300., width=600,
-        #                   offscreen=True))
+        brain = diff.plot('fsaverage', subjects_dir=op.join(data_path, 'subjects'),
+                           surface='inflated', config_opts=dict(height=300., width=600))
 
         stc_all_cluster_vis = summarize_clusters_stc(clu, tstep=diff.tstep,
                                                      vertices=fsave_vertices,
                                                      subject='fsaverage')
 
-        brain = stc_all_cluster_vis.plot('fsaverage', 'inflated', 'split',
-                                         subjects_dir=op.join(data_path, 'subjects'),
-                                         config_opts=dict(height=300., width=600),
-                                         time_label='Duration significant (ms)')
+        # brain = stc_all_cluster_vis.plot('fsaverage', 'inflated', 'split',
+        #                                  subjects_dir=op.join(data_path, 'subjects'),
+        #                                  config_opts=dict(height=300., width=600),
+        #                                  time_label='Duration significant (ms)')
+        # color scale
+        brain.scale_data_colormap(0, min_p_value / 2, min_p_value, True)
 
-        # brain.scale_data_colormap(0, -np.log10(np.min(cluster_p_values)) / 2, -np.log10(np.min(cluster_p_values)), True)
-        # significant times
-        # times_inds = [round(np.mean([clusters[c][0]])) for c in good_cluster_inds]
-        # plot_times = [diff.times[t] * 1000 for t in times_inds]
 
         # if 'imgs' in locals(): del imgs
         # for t in plot_times:
             # print(t)
         img = []
-        for hemi in range(2):
-            # brain.set_time(t)
+        # for hemi in range(1):
+             brain.set_time(t)
             # x = brain.texts_dict['time_label']['text']
             # x.set(text=x.get('text')['text'][5:-6])
             # x.set(width=0.3 * len(x.get('text')['text']))
@@ -151,4 +153,4 @@ for epoch_params in epochs_params:
         ax.axis('off')
         report.add_figs_to_section(fig, contrast['name'], subject)
 
-report.save(open_browser=True)
+# report.save(open_browser=True)
